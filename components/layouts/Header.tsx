@@ -18,19 +18,23 @@ export default function Header() {
       </div>
       <div className="flex-none gap-2">
         <div className="dropdown dropdown-end">
-          <label tabIndex={0} className="btn btn-ghost btn-circle avatar">
-            <div className="w-10 rounded-full bg-primary text-primary-content grid place-items-center">
-              {session?.user?.email?.[0]?.toUpperCase() || 'U'}
-            </div>
-          </label>
-          <ul tabIndex={0} className="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-200 rounded-box w-52">
-            <li className="menu-title px-4 py-2">
-              <span className="text-sm font-semibold">{session?.user?.email}</span>
-            </li>
-            <li><a onClick={() => signOut()}>Logout</a></li>
-          </ul>
-        </div>
+      <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
+       <div className="avatar avatar-placeholder">
+  <div className="bg-neutral text-neutral-content w-8 rounded-full">
+    <span className="text-xs"> {session?.user?.email?.[0]?.toUpperCase() || 'U'}</span>
+  </div>
+</div>
       </div>
+      <ul
+        tabIndex={0}
+        className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
+        <li>
+          <span className="text-sm font-semibold">{session?.user?.email}</span>
+        </li>
+       <li><a onClick={() => signOut()}>Logout</a></li>
+      </ul>
+    </div>
+        </div>
     </div>
   );
 }
