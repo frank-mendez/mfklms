@@ -14,7 +14,7 @@ A modern authentication system built with Next.js 14, featuring role-based acces
 
 ## Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - PostgreSQL
 - npm or yarn
 
@@ -70,6 +70,8 @@ Visit [http://localhost:3000](http://localhost:3000) to see the application.
 - `GET /api/users/[userId]` - Get user details
 - `PATCH /api/users/[userId]` - Update user
 - `DELETE /api/users/[userId]` - Delete user (Admin only)
+
+- `POST /api/auth/credentials` - Login with email and password
 
 ## Tech Stack
 

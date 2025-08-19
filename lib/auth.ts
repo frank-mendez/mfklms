@@ -1,7 +1,6 @@
-// filepath: c:\Users\frank\Projects\mfklms\lib\auth.ts
+
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]";
-import { UserRole } from "@prisma/client/wasm";
 
 export const getCurrentUser = async () => {
   const session = await getServerSession(authOptions);
@@ -10,5 +9,5 @@ export const getCurrentUser = async () => {
 
 export const isAdmin = async () => {
   const user = await getCurrentUser();
-  return user?.role === UserRole.ADMIN;
+  return user?.role === "ADMIN";
 };
