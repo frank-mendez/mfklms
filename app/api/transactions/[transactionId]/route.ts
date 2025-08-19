@@ -1,0 +1,137 @@
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { getCurrentUser, isAdmin } from "@/lib/auth";
+
+// Get specific transaction
+export async function GET(
+  req: Request,
+  { params }: { params: { transactionId: string } }
+) {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const transaction = await db.transaction.findUnique({
+      where: {
+        id: parseInt(params.transactionId)
+      },
+      include: {
+        loan: {
+          select: {
+            id: true,
+            principal: true,
+            status: true,
+            borrower: {
+              select: {
+                id: true,
+                name: true,
+                contactInfo: true,
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!transaction) {
+      return new NextResponse("Transaction not found", { status: 404 });
+    }
+
+    return NextResponse.json(transaction);
+  } catch (error) {
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}
+
+// Update transaction
+export async function PATCH(
+  req: Request,
+  { params }: { params: { transactionId: string } }
+) {
+  try {
+    const isUserAdmin = await isAdmin();
+    if (!isUserAdmin) {
+      return new NextResponse("Unauthorized", { status: 403 });
+    }
+
+    const body = await req.json();
+    const { amount, date } = body;
+
+    const transaction = await db.transaction.findUnique({
+      where: { id: parseInt(params.transactionId) },
+      include: { loan: true }
+    });
+
+    if (!transaction) {
+      return new NextResponse("Transaction not found", { status: 404 });
+    }
+
+    // Don't allow modifications to transactions of closed/defaulted loans
+    if (transaction.loan.status !== 'ACTIVE') {
+      return new NextResponse("Cannot modify transactions of non-active loan", { status: 400 });
+    }
+
+    // Special validation for disbursement modifications
+    if (transaction.transactionType === 'DISBURSEMENT' && amount !== undefined) {
+      return new NextResponse("Cannot modify disbursement amount", { status: 400 });
+    }
+
+    const updatedTransaction = await db.transaction.update({
+      where: {
+        id: parseInt(params.transactionId)
+      },
+      data: {
+        amount: amount !== undefined ? amount : undefined,
+        date: date ? new Date(date) : undefined,
+      }
+    });
+
+    return NextResponse.json(updatedTransaction);
+  } catch (error) {
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}
+
+// Delete transaction
+export async function DELETE(
+  req: Request,
+  { params }: { params: { transactionId: string } }
+) {
+  try {
+    const isUserAdmin = await isAdmin();
+    if (!isUserAdmin) {
+      return new NextResponse("Unauthorized", { status: 403 });
+    }
+
+    const transaction = await db.transaction.findUnique({
+      where: { id: parseInt(params.transactionId) },
+      include: { loan: true }
+    });
+
+    if (!transaction) {
+      return new NextResponse("Transaction not found", { status: 404 });
+    }
+
+    // Don't allow deletion of disbursement transactions
+    if (transaction.transactionType === 'DISBURSEMENT') {
+      return new NextResponse("Cannot delete loan disbursement", { status: 400 });
+    }
+
+    // Don't allow deletion of transactions for closed/defaulted loans
+    if (transaction.loan.status !== 'ACTIVE') {
+      return new NextResponse("Cannot delete transactions of non-active loan", { status: 400 });
+    }
+
+    await db.transaction.delete({
+      where: {
+        id: parseInt(params.transactionId)
+      }
+    });
+
+    return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}
