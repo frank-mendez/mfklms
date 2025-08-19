@@ -20,11 +20,11 @@ export default async function RootLayout({
   const session = await getServerSession();
   return (
     <html lang="en" className={inter.className}>
-      <body>
+      <body suppressHydrationWarning>
         <SessionProvider session={session}>
           {children}
         </SessionProvider>
       </body>
-    </html>
+    </html> 
   );
 }
