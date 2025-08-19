@@ -8,38 +8,38 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  password      String?   // Null if user signs up with OAuth
-  firstName     String?
-  lastName      String?
-  role          UserRole  @default(USER)
-  twoFactorEnabled Boolean @default(false)
-  twoFactorSecret String?
-  verified      Boolean   @default(false)
-  verificationToken String? @unique
-  accounts      Account[]
-  sessions      Session[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                String    @id @default(cuid())
+  email             String    @unique
+  password          String? // Null if user signs up with OAuth
+  firstName         String?
+  lastName          String?
+  role              UserRole  @default(USER)
+  twoFactorEnabled  Boolean   @default(false)
+  twoFactorSecret   String?
+  verified          Boolean   @default(false)
+  verificationToken String?   @unique
+  accounts          Account[]
+  sessions          Session[]
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   @@map("users")
 }
 
 model Account {
-  id                 String    @id @default(cuid())
-  userId             String
-  type               String    // oauth, email, etc
-  provider           String    // google, github, etc
-  providerAccountId  String
-  refresh_token      String?   @db.Text
-  access_token       String?   @db.Text
-  expires_at         Int?
+  id                String  @id @default(cuid())
+  userId            String
+  type              String // oauth, email, etc
+  provider          String // google, github, etc
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
   token_type        String?
   scope             String?
-  id_token         String?   @db.Text
-  session_state    String?
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@map("accounts")
@@ -58,4 +58,78 @@ model Session {
 enum UserRole {
   ADMIN
   USER
+}
+
+model Borrower {
+  id          Int      @id @default(autoincrement())
+  name        String
+  contactInfo String?
+  loans       Loan[] // This defines the relation from Borrower to Loan
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("borrowers")
+}
+
+enum LoanStatus {
+  ACTIVE
+  CLOSED
+  DEFAULTED
+}
+
+model Loan {
+  id           Int           @id @default(autoincrement())
+  borrower     Borrower      @relation(fields: [borrowerId], references: [id])
+  borrowerId   Int
+  principal    Decimal       @db.Decimal(12, 2)
+  interestRate Decimal       @db.Decimal(5, 2)
+  startDate    DateTime      @db.Date
+  maturityDate DateTime?     @db.Date
+  status       LoanStatus    @default(ACTIVE)
+  repayments   Repayment[]
+  transactions Transaction[] // Add this line for the relation
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@map("loans")
+}
+
+enum RepaymentStatus {
+  PENDING
+  PAID
+  LATE
+  MISSED
+}
+
+model Repayment {
+  id          Int             @id @default(autoincrement())
+  loan        Loan            @relation(fields: [loanId], references: [id])
+  loanId      Int
+  dueDate     DateTime        @db.Date
+  amountDue   Decimal         @db.Decimal(12, 2)
+  amountPaid  Decimal?        @db.Decimal(12, 2)
+  paymentDate DateTime?       @db.Date
+  status      RepaymentStatus @default(PENDING)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@map("repayments")
+}
+
+enum TransactionType {
+  DISBURSEMENT
+  REPAYMENT
+}
+
+model Transaction {
+  id              Int             @id @default(autoincrement())
+  loan            Loan            @relation(fields: [loanId], references: [id])
+  loanId          Int
+  transactionType TransactionType
+  amount          Decimal         @db.Decimal(12, 2)
+  date            DateTime        @db.Date
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@map("transactions")
 }
