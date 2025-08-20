@@ -1,45 +1,27 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useRepayments, useUpdateRepayment } from '@/react-query/repayments';
 
-interface Repayment {
-  id: number;
-  loanId: number;
-  loan: {
-    borrower: {
-      name: string;
-    };
-  };
-  dueDate: string;
-  amountDue: number;
-  amountPaid: number | null;
-  paymentDate: string | null;
-  status: 'PENDING' | 'PAID' | 'LATE' | 'MISSED';
-  createdAt: string;
-}
 
 export default function RepaymentsPage() {
-  const [repayments, setRepayments] = useState<Repayment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: repayments, isLoading, error } = useRepayments();
+  const updateRepayment = useUpdateRepayment();
 
-  useEffect(() => {
-    const fetchRepayments = async () => {
+  const handlePayment = async (id: number, amountDue: number) => {
+    if (confirm('Confirm payment for this repayment?')) {
       try {
-        const response = await fetch('/api/repayments');
-        if (!response.ok) throw new Error('Failed to fetch repayments');
-        const data = await response.json();
-        setRepayments(data);
+        await updateRepayment.mutateAsync({
+          id,
+          amount: amountDue,
+          repaymentDate: new Date()
+        });
       } catch (error) {
-        console.error('Error fetching repayments:', error);
-      } finally {
-        setLoading(false);
+        console.error('Error recording payment:', error);
       }
-    };
+    }
+  };
 
-    fetchRepayments();
-  }, []);
-
-  const getStatusBadgeClass = (status: Repayment['status']) => {
+  const getStatusBadgeClass = (status: 'PENDING' | 'PAID' | 'LATE' | 'MISSED') => {
     switch (status) {
       case 'PAID':
         return 'badge badge-success';
@@ -61,11 +43,13 @@ export default function RepaymentsPage() {
     }).format(amount);
   };
 
-  const calculatePaymentStatus = (dueDate: string, status: Repayment['status']) => {
-    if (status !== 'PENDING') return status;
+  const calculatePaymentStatus = (repaymentDate: Date): 'PENDING' | 'PAID' | 'LATE' => {
+    // If repayment has been made (date exists and is in the past or present), it's PAID
     const now = new Date();
-    const due = new Date(dueDate);
-    return now > due ? 'LATE' : 'PENDING';
+    if (repaymentDate <= now) {
+      return 'PAID';
+    }
+    return 'PENDING';
   };
 
   return (
@@ -75,9 +59,14 @@ export default function RepaymentsPage() {
         <button className="btn btn-primary">Record Payment</button>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center">
           <span className="loading loading-spinner loading-lg"></span>
+        </div>
+      ) : error ? (
+        <div className="alert alert-error">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span>Error loading repayments. Please try again later.</span>
         </div>
       ) : (
         <div className="overflow-x-auto bg-base-200 rounded-lg">
@@ -96,24 +85,24 @@ export default function RepaymentsPage() {
               </tr>
             </thead>
             <tbody>
-              {repayments.map((repayment) => {
-                const currentStatus = calculatePaymentStatus(repayment.dueDate, repayment.status);
+              {repayments?.map((repayment) => {
+                const currentStatus = calculatePaymentStatus(repayment.repaymentDate);
                 return (
                   <tr key={repayment.id}>
                     <td>{repayment.id}</td>
                     <td>{repayment.loanId}</td>
                     <td>{repayment.loan.borrower.name}</td>
-                    <td>{new Date(repayment.dueDate).toLocaleDateString()}</td>
-                    <td>{formatCurrency(repayment.amountDue)}</td>
+                    <td>{repayment.repaymentDate ? new Date(repayment.repaymentDate).toLocaleDateString() : '-'}</td>
+                    <td>{formatCurrency(repayment.amount)}</td>
                     <td>
-                      {repayment.amountPaid 
-                        ? formatCurrency(repayment.amountPaid)
+                      {currentStatus === 'PAID'
+                        ? formatCurrency(repayment.amount)
                         : '-'
                       }
                     </td>
                     <td>
-                      {repayment.paymentDate
-                        ? new Date(repayment.paymentDate).toLocaleDateString()
+                      {repayment.repaymentDate
+                        ? new Date(repayment.repaymentDate).toLocaleDateString()
                         : '-'
                       }
                     </td>
@@ -125,7 +114,8 @@ export default function RepaymentsPage() {
                     <td className="space-x-2">
                       <button 
                         className="btn btn-sm btn-success"
-                        disabled={currentStatus === 'PAID'}
+                        onClick={() => handlePayment(repayment.id, repayment.amount)}
+                        disabled={currentStatus === 'PAID' || updateRepayment.isPending}
                       >
                         Pay
                       </button>
@@ -135,7 +125,7 @@ export default function RepaymentsPage() {
                   </tr>
                 );
               })}
-              {repayments.length === 0 && (
+              {(!repayments || repayments.length === 0) && (
                 <tr>
                   <td colSpan={9} className="text-center py-4">
                     No repayments found
