@@ -1,43 +1,22 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-
-interface Loan {
-  id: number;
-  borrowerId: number;
-  borrower: {
-    name: string;
-  };
-  principal: number;
-  interestRate: number;
-  startDate: string;
-  maturityDate: string | null;
-  status: 'ACTIVE' | 'CLOSED' | 'DEFAULTED';
-  createdAt: string;
-}
+import { useLoans, useDeleteLoan } from '@/react-query/loans';
 
 export default function LoansPage() {
-  const [loans, setLoans] = useState<Loan[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: loans, isLoading, error } = useLoans();
+  const deleteLoan = useDeleteLoan();
 
-  useEffect(() => {
-    const fetchLoans = async () => {
+  const handleDelete = async (id: number) => {
+    if (confirm('Are you sure you want to delete this loan?')) {
       try {
-        const response = await fetch('/api/loans');
-        if (!response.ok) throw new Error('Failed to fetch loans');
-        const data = await response.json();
-        setLoans(data);
+        await deleteLoan.mutateAsync(id);
       } catch (error) {
-        console.error('Error fetching loans:', error);
-      } finally {
-        setLoading(false);
+        console.error('Error deleting loan:', error);
       }
-    };
+    }
+  };
 
-    fetchLoans();
-  }, []);
-
-  const getStatusBadgeClass = (status: Loan['status']) => {
+  const getStatusBadgeClass = (status: 'ACTIVE' | 'CLOSED' | 'DEFAULTED') => {
     switch (status) {
       case 'ACTIVE':
         return 'badge badge-success';
@@ -64,9 +43,14 @@ export default function LoansPage() {
         <button className="btn btn-primary">Create Loan</button>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center">
           <span className="loading loading-spinner loading-lg"></span>
+        </div>
+      ) : error ? (
+        <div className="alert alert-error">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span>Error loading loans. Please try again later.</span>
         </div>
       ) : (
         <div className="overflow-x-auto bg-base-200 rounded-lg">
@@ -84,7 +68,7 @@ export default function LoansPage() {
               </tr>
             </thead>
             <tbody>
-              {loans.map((loan) => (
+              {loans?.map((loan) => (
                 <tr key={loan.id}>
                   <td>{loan.id}</td>
                   <td>{loan.borrower.name}</td>
@@ -104,11 +88,17 @@ export default function LoansPage() {
                   <td className="space-x-2">
                     <button className="btn btn-sm btn-info">View</button>
                     <button className="btn btn-sm btn-warning">Edit</button>
-                    <button className="btn btn-sm btn-error">Delete</button>
+                    <button 
+                      className="btn btn-sm btn-error"
+                      onClick={() => handleDelete(loan.id)}
+                      disabled={deleteLoan.isPending}
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}
-              {loans.length === 0 && (
+              {(!loans || loans.length === 0) && (
                 <tr>
                   <td colSpan={8} className="text-center py-4">
                     No loans found
