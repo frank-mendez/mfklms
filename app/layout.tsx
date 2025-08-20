@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import { getServerSession } from "next-auth";
 import "./globals.css";
 import SessionProvider from "@/components/SessionProvider";
+import QueryProvider from "@/components/QueryProvider";
 
 
 export const metadata: Metadata = {
@@ -22,7 +23,9 @@ export default async function RootLayout({
     <html lang="en" className={inter.className}>
       <body suppressHydrationWarning>
         <SessionProvider session={session}>
-          {children}
+          <QueryProvider>
+            {children}
+          </QueryProvider>
         </SessionProvider>
       </body>
     </html> 

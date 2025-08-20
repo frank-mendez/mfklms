@@ -1,35 +1,22 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-
-interface Borrower {
-  id: number;
-  name: string;
-  contactInfo: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
+import { useBorrowers, useDeleteBorrower } from '@/react-query/borrowers';
+import { useState } from 'react';
 
 export default function BorrowersPage() {
-  const [borrowers, setBorrowers] = useState<Borrower[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: borrowers, isLoading, error } = useBorrowers();
+  const deleteBorrower = useDeleteBorrower();
+  const [selectedBorrowerId, setSelectedBorrowerId] = useState<number | null>(null);
 
-  useEffect(() => {
-    const fetchBorrowers = async () => {
+  const handleDelete = async (id: number) => {
+    if (confirm('Are you sure you want to delete this borrower?')) {
       try {
-        const response = await fetch('/api/borrowers');
-        if (!response.ok) throw new Error('Failed to fetch borrowers');
-        const data = await response.json();
-        setBorrowers(data);
+        await deleteBorrower.mutateAsync(id);
       } catch (error) {
-        console.error('Error fetching borrowers:', error);
-      } finally {
-        setLoading(false);
+        console.error('Error deleting borrower:', error);
       }
-    };
-
-    fetchBorrowers();
-  }, []);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -38,9 +25,14 @@ export default function BorrowersPage() {
         <button className="btn btn-primary">Add Borrower</button>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center">
           <span className="loading loading-spinner loading-lg"></span>
+        </div>
+      ) : error ? (
+        <div className="alert alert-error">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span>Error loading borrowers. Please try again later.</span>
         </div>
       ) : (
         <div className="overflow-x-auto bg-base-200 rounded-lg">
@@ -55,7 +47,7 @@ export default function BorrowersPage() {
               </tr>
             </thead>
             <tbody>
-              {borrowers.map((borrower) => (
+              {borrowers?.map((borrower) => (
                 <tr key={borrower.id}>
                   <td>{borrower.id}</td>
                   <td>{borrower.name}</td>
@@ -64,11 +56,17 @@ export default function BorrowersPage() {
                   <td className="space-x-2">
                     <button className="btn btn-sm btn-info">View</button>
                     <button className="btn btn-sm btn-warning">Edit</button>
-                    <button className="btn btn-sm btn-error">Delete</button>
+                    <button 
+                      className="btn btn-sm btn-error"
+                      onClick={() => handleDelete(borrower.id)}
+                      disabled={deleteBorrower.isPending}
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}
-              {borrowers.length === 0 && (
+              {(!borrowers || borrowers.length === 0) && (
                 <tr>
                   <td colSpan={5} className="text-center py-4">
                     No borrowers found
