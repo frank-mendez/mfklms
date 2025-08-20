@@ -1,35 +1,28 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useOwners, useDeleteOwner } from '@/react-query/owners';
 
 interface Owner {
   id: number;
   name: string;
   contactInfo: string | null;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export default function OwnersPage() {
-  const [owners, setOwners] = useState<Owner[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: owners, isLoading, error } = useOwners();
+  const deleteOwner = useDeleteOwner();
 
-  useEffect(() => {
-    const fetchOwners = async () => {
+  const handleDelete = async (id: number) => {
+    if (confirm('Are you sure you want to delete this owner?')) {
       try {
-        const response = await fetch('/api/owners');
-        if (!response.ok) throw new Error('Failed to fetch owners');
-        const data = await response.json();
-        setOwners(data);
+        await deleteOwner.mutateAsync(id);
       } catch (error) {
-        console.error('Error fetching owners:', error);
-      } finally {
-        setLoading(false);
+        console.error('Error deleting owner:', error);
       }
-    };
-
-    fetchOwners();
-  }, []);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -38,9 +31,14 @@ export default function OwnersPage() {
         <button className="btn btn-primary">Add Owner</button>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center">
           <span className="loading loading-spinner loading-lg"></span>
+        </div>
+      ) : error ? (
+        <div className="alert alert-error">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span>Error loading owners. Please try again later.</span>
         </div>
       ) : (
         <div className="overflow-x-auto bg-base-200 rounded-lg">
@@ -55,7 +53,7 @@ export default function OwnersPage() {
               </tr>
             </thead>
             <tbody>
-              {owners.map((owner) => (
+              {owners?.map((owner) => (
                 <tr key={owner.id}>
                   <td>{owner.id}</td>
                   <td>{owner.name}</td>
@@ -64,11 +62,17 @@ export default function OwnersPage() {
                   <td className="space-x-2">
                     <button className="btn btn-sm btn-info">View</button>
                     <button className="btn btn-sm btn-warning">Edit</button>
-                    <button className="btn btn-sm btn-error">Delete</button>
+                    <button 
+                      className="btn btn-sm btn-error"
+                      onClick={() => handleDelete(owner.id)}
+                      disabled={deleteOwner.isPending}
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}
-              {owners.length === 0 && (
+              {(!owners || owners.length === 0) && (
                 <tr>
                   <td colSpan={5} className="text-center py-4">
                     No owners found
