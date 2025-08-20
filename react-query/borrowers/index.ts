@@ -1,21 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
-interface Borrower {
-  id: number;
-  name: string;
-  contactInfo: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface CreateBorrowerData {
-  name: string;
-  contactInfo?: string;
-}
-
-interface UpdateBorrowerData extends CreateBorrowerData {
-  id: number;
-}
+import { Borrower, CreateBorrowerData, UpdateBorrowerData } from "@/types/borrower";
 
 // Fetch all borrowers
 export function useBorrowers() {

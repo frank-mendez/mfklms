@@ -1,23 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-
-interface Owner {
-  id: number;
-  name: string;
-  contactInfo: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-interface CreateOwnerDTO {
-  name: string;
-  contactInfo?: string;
-}
-
-interface UpdateOwnerDTO {
-  id: number;
-  name: string;
-  contactInfo?: string;
-}
+import { Owner, CreateOwnerDTO, UpdateOwnerDTO } from '@/types/owner';
 
 // Query hook to fetch all owners
 export const useOwners = () => {

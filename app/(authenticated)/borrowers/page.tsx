@@ -1,12 +1,9 @@
 'use client';
-
 import { useBorrowers, useDeleteBorrower } from '@/react-query/borrowers';
-import { useState } from 'react';
 
 export default function BorrowersPage() {
   const { data: borrowers, isLoading, error } = useBorrowers();
   const deleteBorrower = useDeleteBorrower();
-  const [selectedBorrowerId, setSelectedBorrowerId] = useState<number | null>(null);
 
   const handleDelete = async (id: number) => {
     if (confirm('Are you sure you want to delete this borrower?')) {

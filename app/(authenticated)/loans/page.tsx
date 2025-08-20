@@ -1,6 +1,7 @@
 'use client';
 
 import { useLoans, useDeleteLoan } from '@/react-query/loans';
+import { LoanStatus } from '@/types/loan';
 
 export default function LoansPage() {
   const { data: loans, isLoading, error } = useLoans();
@@ -16,7 +17,7 @@ export default function LoansPage() {
     }
   };
 
-  const getStatusBadgeClass = (status: 'ACTIVE' | 'CLOSED' | 'DEFAULTED') => {
+  const getStatusBadgeClass = (status: LoanStatus) => {
     switch (status) {
       case 'ACTIVE':
         return 'badge badge-success';

@@ -1,32 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
-interface Loan {
-  id: number;
-  borrowerId: number;
-  borrower: {
-    name: string;
-  };
-  principal: number;
-  interestRate: number;
-  startDate: string;
-  maturityDate: string | null;
-  status: 'ACTIVE' | 'CLOSED' | 'DEFAULTED';
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface CreateLoanData {
-  borrowerId: number;
-  principal: number;
-  interestRate: number;
-  startDate: string;
-  maturityDate?: string;
-}
-
-interface UpdateLoanData extends Partial<CreateLoanData> {
-  id: number;
-  status?: 'ACTIVE' | 'CLOSED' | 'DEFAULTED';
-}
+import { Loan, CreateLoanData, UpdateLoanData } from "@/types/loan";
 
 // Fetch all loans
 export function useLoans() {

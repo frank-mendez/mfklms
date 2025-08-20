@@ -1,33 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-
-interface Stash {
-  id: number;
-  ownerId: number;
-  owner: {
-    id: number;
-    name: string;
-  };
-  month: Date;
-  amount: number;
-  remarks: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-interface CreateStashDTO {
-  ownerId: number;
-  month: Date;
-  amount: number;
-  remarks?: string;
-}
-
-interface UpdateStashDTO {
-  id: number;
-  ownerId: number;
-  month: Date;
-  amount: number;
-  remarks?: string;
-}
+import { Stash, CreateStashDTO, UpdateStashDTO } from '@/types/stash';
 
 // Query hook to fetch all stashes
 export const useStashes = () => {

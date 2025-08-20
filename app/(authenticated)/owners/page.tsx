@@ -2,14 +2,6 @@
 
 import { useOwners, useDeleteOwner } from '@/react-query/owners';
 
-interface Owner {
-  id: number;
-  name: string;
-  contactInfo: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
 export default function OwnersPage() {
   const { data: owners, isLoading, error } = useOwners();
   const deleteOwner = useDeleteOwner();

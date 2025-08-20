@@ -2,20 +2,6 @@
 
 import { useStashes, useDeleteStash } from '@/react-query/stashes';
 
-interface Stash {
-  id: number;
-  ownerId: number;
-  owner: {
-    id: number;
-    name: string;
-  };
-  month: Date;
-  amount: number;
-  remarks: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
 export default function StashesPage() {
   const { data: stashes, isLoading, error } = useStashes();
   const deleteStash = useDeleteStash();

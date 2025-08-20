@@ -1,30 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-
-interface Repayment {
-  id: number;
-  loanId: number;
-  amount: number;
-  repaymentDate: Date;
-  loan: {
-    id: number;
-    borrower: {
-      id: number;
-      name: string;
-    };
-  };
-}
-
-interface CreateRepaymentDTO {
-  loanId: number;
-  amount: number;
-  repaymentDate: Date;
-}
-
-interface UpdateRepaymentDTO {
-  id: number;
-  amount: number;
-  repaymentDate: Date;
-}
+import { Repayment, CreateRepaymentDTO, UpdateRepaymentDTO } from '@/types/repayment';
 
 // Query hook to fetch all repayments
 export const useRepayments = () => {

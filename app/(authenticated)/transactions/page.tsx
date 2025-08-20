@@ -1,22 +1,7 @@
 'use client';
 
 import { useTransactions, useDeleteTransaction } from '@/react-query/transactions';
-
-interface Transaction {
-  id: number;
-  loanId: number;
-  loan: {
-    id: number;
-    borrower: {
-      id: number;
-      name: string;
-    };
-  };
-  transactionType: 'DISBURSEMENT' | 'REPAYMENT';
-  amount: number;
-  date: Date;
-  createdAt: Date;
-}
+import { TransactionType } from '@/types/transaction';
 
 export default function TransactionsPage() {
   const { data: transactions, isLoading, error } = useTransactions();
@@ -32,7 +17,7 @@ export default function TransactionsPage() {
     }
   };
 
-  const getTransactionTypeClass = (type: Transaction['transactionType']) => {
+  const getTransactionTypeClass = (type: TransactionType) => {
     switch (type) {
       case 'DISBURSEMENT':
         return 'badge badge-warning';
