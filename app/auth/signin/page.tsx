@@ -49,48 +49,74 @@ export default function SignInPage(){
   }
 
   return (
-    <div className="mx-auto max-w-sm p-6">
-      <h1 className="mb-4 text-2xl font-semibold">Sign in</h1>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <label className="block">
-          <span className="mb-1 block text-sm">Email</span>
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-xl border p-2"
-            placeholder="you@example.com"
-          />
-        </label>
-
-        <label className="block">
-          <span className="mb-1 block text-sm">Password</span>
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-xl border p-2"
-            placeholder="••••••••"
-          />
-        </label>
-
-        {error && (
-          <p className="rounded-xl border border-red-200 bg-red-50 p-2 text-sm">
-            {error}
+    <div className="hero min-h-screen bg-base-200">
+      <div className="hero-content flex-col lg:flex-row-reverse">
+        <div className="text-center lg:text-left">
+          <h1 className="text-5xl font-bold">Welcome Back!</h1>
+          <p className="py-6">
+            Sign in to your MFKLMS account to manage loans, repayments, and more.
           </p>
-        )}
+        </div>
+        <div className="card shrink-0 w-full max-w-sm shadow-2xl bg-base-100">
+          <form onSubmit={handleSubmit} className="card-body">
+            <h2 className="text-2xl font-bold text-center mb-4">Sign In</h2>
+            
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Email</span>
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="input input-bordered"
+                placeholder="you@example.com"
+              />
+            </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-xl border p-2 font-medium disabled:opacity-60"
-        >
-          {loading ? "Signing in..." : "Sign in"}
-        </button>
-      </form>
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Password</span>
+              </label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="input input-bordered"
+                placeholder="••••••••"
+              />
+            </div>
+
+            {error && (
+              <div className="alert alert-error">
+                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{error}</span>
+              </div>
+            )}
+
+            <div className="form-control mt-6">
+              <button
+                type="submit"
+                disabled={loading}
+                className={`btn btn-primary ${loading ? 'loading' : ''}`}
+              >
+                {loading ? (
+                  <>
+                    <span className="loading loading-spinner"></span>
+                    Signing in...
+                  </>
+                ) : (
+                  'Sign in'
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }
