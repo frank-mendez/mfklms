@@ -3,10 +3,14 @@ import { useState } from 'react';
 import { useLoans } from '@/react-query/loans';
 import { Loan } from '@/types/loan';
 import { CreateEditLoanModal, DeleteLoanModal, ViewLoanModal } from '@/components/loans';
+import { ErrorModal } from '@/components/common';
 import { PlusIcon, EyeIcon, EditIcon, DeleteIcon, ErrorIcon, LoadingSpinner, MoneyIcon } from '@/assets/icons';
+import { formatCurrency } from '@/utils/loans';
+import { useErrorModal } from '@/hooks';
 
 export default function LoansPage() {
   const { data: loans, isLoading, error } = useLoans();
+  const { errorModal, showError, hideError } = useErrorModal();
   
   // Modal state
   const [isCreateEditModalOpen, setIsCreateEditModalOpen] = useState(false);
@@ -58,13 +62,6 @@ export default function LoansPage() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'PHP'
-    }).format(amount);
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -97,7 +94,7 @@ export default function LoansPage() {
                 <th>Principal</th>
                 <th>Interest Rate</th>
                 <th>Start Date</th>
-                <th>Maturity Date</th>
+                <th>Return Date</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -166,6 +163,7 @@ export default function LoansPage() {
         isOpen={isCreateEditModalOpen}
         onClose={handleCloseCreateEditModal}
         editingLoan={editingLoan}
+        onError={showError}
       />
       
       <ViewLoanModal
@@ -177,6 +175,14 @@ export default function LoansPage() {
       <DeleteLoanModal
         loan={deletingLoan}
         onClose={handleCloseDeleteModal}
+        onError={showError}
+      />
+      
+      <ErrorModal
+        isOpen={errorModal.isOpen}
+        onClose={hideError}
+        title={errorModal.title}
+        message={errorModal.message}
       />
     </div>
   );

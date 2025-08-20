@@ -1,0 +1,1 @@
+export { useErrorModal } from './useErrorModal';

@@ -4,17 +4,20 @@ import { useCreateLoan, useUpdateLoan } from '@/react-query/loans';
 import { useBorrowers } from '@/react-query/borrowers';
 import { CreateLoanData, Loan } from '@/types/loan';
 import { LoadingSpinner, PlusIcon, EditIcon } from '@/assets/icons';
+import { calculateLoanTerms, formatCurrency, calculateExpectedMonthlyPayment, calculateLoanTermInMonths, calculateExpectedTotalInterest, calculateExpectedTotalReturn } from '@/utils/loans';
 
 interface CreateEditLoanModalProps {
   isOpen: boolean;
   onClose: () => void;
   editingLoan: Loan | null;
+  onError?: (title: string, message?: string, error?: Error | string) => void;
 }
 
 export default function CreateEditLoanModal({ 
   isOpen, 
   onClose, 
-  editingLoan 
+  editingLoan,
+  onError
 }: CreateEditLoanModalProps) {
   const createLoan = useCreateLoan();
   const updateLoan = useUpdateLoan();
@@ -43,12 +46,16 @@ export default function CreateEditLoanModal({
         });
       } else {
         const today = new Date().toISOString().split('T')[0];
+        const nextMonth = new Date();
+        nextMonth.setMonth(nextMonth.getMonth() + 1);
+        const defaultMaturityDate = nextMonth.toISOString().split('T')[0];
+        
         setFormData({ 
           borrowerId: 0,
           principal: 0,
           interestRate: 0,
           startDate: today,
-          maturityDate: ''
+          maturityDate: defaultMaturityDate
         });
       }
       setFormErrors({});
@@ -92,7 +99,9 @@ export default function CreateEditLoanModal({
       errors.startDate = 'Start date is required';
     }
     
-    if (formData.maturityDate && formData.startDate && 
+    if (!formData.maturityDate) {
+      errors.maturityDate = 'Expected return date is required';
+    } else if (formData.startDate && 
         new Date(formData.maturityDate) <= new Date(formData.startDate)) {
       errors.maturityDate = 'Maturity date must be after start date';
     }
@@ -112,7 +121,7 @@ export default function CreateEditLoanModal({
       const submitData = {
         ...formData,
         startDate: formData.startDate,
-        maturityDate: formData.maturityDate || undefined
+        maturityDate: formData.maturityDate // Now always required
       };
 
       if (editingLoan) {
@@ -130,6 +139,14 @@ export default function CreateEditLoanModal({
       onClose();
     } catch (error) {
       console.error('Error saving loan:', error);
+      const title = editingLoan ? 'Failed to Update Loan' : 'Failed to Create Loan';
+      const message = editingLoan 
+        ? 'There was an error updating the loan. Please try again.' 
+        : 'There was an error creating the loan. Please try again.';
+      
+      if (onError) {
+        onError(title, message, error as Error);
+      }
     }
   };
 
@@ -239,16 +256,17 @@ export default function CreateEditLoanModal({
             </div>
           </div>
 
-          {/* Maturity Date */}
+          {/* Expected Return Date */}
           <div className="form-control w-full mb-6">
             <label className="label">
-              <span className="label-text">Maturity Date</span>
+              <span className="label-text">Expected Return Date *</span>
             </label>
             <input
               type="date"
               name="maturityDate"
               value={formData.maturityDate}
               onChange={handleInputChange}
+              min={new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]} // Tomorrow's date
               className={`input input-bordered w-full ${formErrors.maturityDate ? 'input-error' : ''}`}
             />
             {formErrors.maturityDate && (
@@ -256,10 +274,55 @@ export default function CreateEditLoanModal({
                 <span className="label-text-alt text-error">{formErrors.maturityDate}</span>
               </label>
             )}
-            <label className="label">
-              <span className="label-text-alt">Optional - Leave empty for open-ended loan</span>
-            </label>
+            {calculateLoanTerms(formData.startDate, formData.maturityDate) && (
+              <label className="label">
+                <span className="label-text-alt">
+                  <span className="font-medium text-primary">Terms: {calculateLoanTerms(formData.startDate, formData.maturityDate)}</span>
+                </span>
+              </label>
+            )}
           </div>
+
+          {/* Loan Summary Table */}
+          {formData.principal > 0 && formData.interestRate >= 0 && formData.startDate && formData.maturityDate && (
+            <div className="mb-6">
+              <h4 className="font-semibold text-lg mb-4">Loan Summary</h4>
+              <div className="overflow-x-auto">
+                <table className="table table-zebra w-full">
+                  <tbody>
+                    <tr>
+                      <td className="font-medium">Loan Term</td>
+                      <td>{calculateLoanTerms(formData.startDate, formData.maturityDate)}</td>
+                    </tr>
+                    <tr>
+                      <td className="font-medium">Expected Monthly Payment</td>
+                      <td>{formatCurrency(calculateExpectedMonthlyPayment(
+                        formData.principal, 
+                        formData.interestRate, 
+                        calculateLoanTermInMonths(formData.startDate, formData.maturityDate)
+                      ))}</td>
+                    </tr>
+                    <tr>
+                      <td className="font-medium">Expected Total Interest</td>
+                      <td className="text-warning font-semibold">{formatCurrency(calculateExpectedTotalInterest(
+                        formData.principal, 
+                        formData.interestRate, 
+                        calculateLoanTermInMonths(formData.startDate, formData.maturityDate)
+                      ))}</td>
+                    </tr>
+                    <tr>
+                      <td className="font-medium">Expected Total Return</td>
+                      <td className="text-accent font-semibold">{formatCurrency(calculateExpectedTotalReturn(
+                        formData.principal, 
+                        formData.interestRate,
+                        calculateLoanTermInMonths(formData.startDate, formData.maturityDate)
+                      ))}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
           <div className="modal-action">
             <button

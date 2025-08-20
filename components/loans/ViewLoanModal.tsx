@@ -1,6 +1,7 @@
 'use client';
 import { Loan } from '@/types/loan';
 import { CloseIcon, CreateIcon, EditIcon, MoneyIcon, LightningIcon, CheckCircleIcon } from '@/assets/icons';
+import { formatCurrency, calculateLoanTermInMonths, calculateExpectedTotalInterest, calculateExpectedTotalReturn, calculateLoanTerms, calculateExpectedMonthlyPayment } from '@/utils/loans';
 
 interface ViewLoanModalProps {
   loan: Loan | null;
@@ -10,13 +11,6 @@ interface ViewLoanModalProps {
 
 export default function ViewLoanModal({ loan, onClose, onEdit }: ViewLoanModalProps) {
   if (!loan) return null;
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'PHP'
-    }).format(amount);
-  };
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
@@ -31,9 +25,12 @@ export default function ViewLoanModal({ loan, onClose, onEdit }: ViewLoanModalPr
     }
   };
 
-  // Calculate loan metrics
-  const totalInterest = loan.principal * (loan.interestRate / 100);
-  const totalAmount = loan.principal + totalInterest;
+  // Calculate loan metrics using utility functions
+  const loanTermInMonths = calculateLoanTermInMonths(loan.startDate, loan.maturityDate || undefined);
+  const loanTermsText = calculateLoanTerms(loan.startDate, loan.maturityDate || undefined);
+  const expectedMonthlyPayment = calculateExpectedMonthlyPayment(loan.principal, loan.interestRate, loanTermInMonths);
+  const totalInterest = calculateExpectedTotalInterest(loan.principal, loan.interestRate, loanTermInMonths);
+  const expectedReturnAmount = calculateExpectedTotalReturn(loan.principal, loan.interestRate, loanTermInMonths);
   const daysSinceStart = Math.floor((new Date().getTime() - new Date(loan.startDate).getTime()) / (1000 * 60 * 60 * 24));
 
   return (
@@ -89,7 +86,7 @@ export default function ViewLoanModal({ loan, onClose, onEdit }: ViewLoanModalPr
           <div className="card bg-base-200">
             <div className="card-body">
               <h4 className="card-title text-lg mb-4">Financial Details</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                   <label className="label">
                     <span className="label-text font-medium">Principal Amount</span>
@@ -108,7 +105,25 @@ export default function ViewLoanModal({ loan, onClose, onEdit }: ViewLoanModalPr
                 </div>
                 <div>
                   <label className="label">
-                    <span className="label-text font-medium">Total Interest</span>
+                    <span className="label-text font-medium">Loan Terms</span>
+                  </label>
+                  <div className="bg-base-100 p-3 rounded-lg">
+                    <span className="text-lg font-semibold text-info">
+                      {loanTermsText || 'Open-ended'}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <label className="label">
+                    <span className="label-text font-medium">Expected Monthly Payment</span>
+                  </label>
+                  <div className="bg-base-100 p-3 rounded-lg">
+                    <span className="text-xl font-semibold text-success">{formatCurrency(expectedMonthlyPayment)}</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="label">
+                    <span className="label-text font-medium">Expected Total Interest</span>
                   </label>
                   <div className="bg-base-100 p-3 rounded-lg">
                     <span className="text-xl font-semibold text-warning">{formatCurrency(totalInterest)}</span>
@@ -116,10 +131,10 @@ export default function ViewLoanModal({ loan, onClose, onEdit }: ViewLoanModalPr
                 </div>
                 <div>
                   <label className="label">
-                    <span className="label-text font-medium">Total Amount</span>
+                    <span className="label-text font-medium">Expected Return Amount</span>
                   </label>
                   <div className="bg-base-100 p-3 rounded-lg">
-                    <span className="text-xl font-semibold text-accent">{formatCurrency(totalAmount)}</span>
+                    <span className="text-xl font-semibold text-accent">{formatCurrency(expectedReturnAmount)}</span>
                   </div>
                 </div>
               </div>
@@ -203,9 +218,9 @@ export default function ViewLoanModal({ loan, onClose, onEdit }: ViewLoanModalPr
                   <div className="stat-figure text-accent">
                     <CheckCircleIcon />
                   </div>
-                  <div className="stat-title">Outstanding</div>
-                  <div className="stat-value text-accent">{formatCurrency(totalAmount)}</div>
-                  <div className="stat-desc">Amount remaining</div>
+                  <div className="stat-title">Expected Return</div>
+                  <div className="stat-value text-accent">{formatCurrency(expectedReturnAmount)}</div>
+                  <div className="stat-desc">Total expected amount</div>
                 </div>
               </div>
             </div>

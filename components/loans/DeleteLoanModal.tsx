@@ -6,9 +6,10 @@ import { WarningIcon, DeleteIcon, LoadingSpinner } from '@/assets/icons';
 interface DeleteLoanModalProps {
   loan: Loan | null;
   onClose: () => void;
+  onError?: (title: string, message?: string, error?: Error | string) => void;
 }
 
-export default function DeleteLoanModal({ loan, onClose }: DeleteLoanModalProps) {
+export default function DeleteLoanModal({ loan, onClose, onError }: DeleteLoanModalProps) {
   const deleteLoan = useDeleteLoan();
 
   const handleConfirmDelete = async () => {
@@ -19,6 +20,13 @@ export default function DeleteLoanModal({ loan, onClose }: DeleteLoanModalProps)
       onClose();
     } catch (error) {
       console.error('Error deleting loan:', error);
+      if (onError) {
+        onError(
+          'Failed to Delete Loan',
+          'There was an error deleting the loan. Please try again.',
+          error as Error
+        );
+      }
     }
   };
 
