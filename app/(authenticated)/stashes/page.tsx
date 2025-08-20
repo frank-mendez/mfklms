@@ -1,39 +1,34 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useStashes, useDeleteStash } from '@/react-query/stashes';
 
 interface Stash {
   id: number;
   ownerId: number;
   owner: {
+    id: number;
     name: string;
   };
-  month: string;
+  month: Date;
   amount: number;
   remarks: string | null;
-  createdAt: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export default function StashesPage() {
-  const [stashes, setStashes] = useState<Stash[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: stashes, isLoading, error } = useStashes();
+  const deleteStash = useDeleteStash();
 
-  useEffect(() => {
-    const fetchStashes = async () => {
+  const handleDelete = async (id: number) => {
+    if (confirm('Are you sure you want to delete this stash contribution?')) {
       try {
-        const response = await fetch('/api/stashes');
-        if (!response.ok) throw new Error('Failed to fetch stashes');
-        const data = await response.json();
-        setStashes(data);
+        await deleteStash.mutateAsync(id);
       } catch (error) {
-        console.error('Error fetching stashes:', error);
-      } finally {
-        setLoading(false);
+        console.error('Error deleting stash:', error);
       }
-    };
-
-    fetchStashes();
-  }, []);
+    }
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -42,8 +37,8 @@ export default function StashesPage() {
     }).format(amount);
   };
 
-  const formatMonth = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', { 
+  const formatMonth = (date: Date) => {
+    return new Date(date).toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'long'
     });
@@ -56,9 +51,14 @@ export default function StashesPage() {
         <button className="btn btn-primary">Add Contribution</button>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center">
           <span className="loading loading-spinner loading-lg"></span>
+        </div>
+      ) : error ? (
+        <div className="alert alert-error">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span>Error loading stash contributions. Please try again later.</span>
         </div>
       ) : (
         <div className="overflow-x-auto bg-base-200 rounded-lg">
@@ -75,7 +75,7 @@ export default function StashesPage() {
               </tr>
             </thead>
             <tbody>
-              {stashes.map((stash) => (
+              {stashes?.map((stash) => (
                 <tr key={stash.id}>
                   <td>{stash.id}</td>
                   <td>{stash.owner.name}</td>
@@ -86,11 +86,17 @@ export default function StashesPage() {
                   <td className="space-x-2">
                     <button className="btn btn-sm btn-info">View</button>
                     <button className="btn btn-sm btn-warning">Edit</button>
-                    <button className="btn btn-sm btn-error">Delete</button>
+                    <button 
+                      className="btn btn-sm btn-error"
+                      onClick={() => handleDelete(stash.id)}
+                      disabled={deleteStash.isPending}
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}
-              {stashes.length === 0 && (
+              {(!stashes || stashes.length === 0) && (
                 <tr>
                   <td colSpan={7} className="text-center py-4">
                     No contributions found
