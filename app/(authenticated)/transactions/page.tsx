@@ -1,41 +1,36 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useTransactions, useDeleteTransaction } from '@/react-query/transactions';
 
 interface Transaction {
   id: number;
   loanId: number;
   loan: {
+    id: number;
     borrower: {
+      id: number;
       name: string;
     };
   };
   transactionType: 'DISBURSEMENT' | 'REPAYMENT';
   amount: number;
-  date: string;
-  createdAt: string;
+  date: Date;
+  createdAt: Date;
 }
 
 export default function TransactionsPage() {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: transactions, isLoading, error } = useTransactions();
+  const deleteTransaction = useDeleteTransaction();
 
-  useEffect(() => {
-    const fetchTransactions = async () => {
+  const handleDelete = async (id: number) => {
+    if (confirm('Are you sure you want to delete this transaction?')) {
       try {
-        const response = await fetch('/api/transactions');
-        if (!response.ok) throw new Error('Failed to fetch transactions');
-        const data = await response.json();
-        setTransactions(data);
+        await deleteTransaction.mutateAsync(id);
       } catch (error) {
-        console.error('Error fetching transactions:', error);
-      } finally {
-        setLoading(false);
+        console.error('Error deleting transaction:', error);
       }
-    };
-
-    fetchTransactions();
-  }, []);
+    }
+  };
 
   const getTransactionTypeClass = (type: Transaction['transactionType']) => {
     switch (type) {
@@ -55,8 +50,8 @@ export default function TransactionsPage() {
     }).format(amount);
   };
 
-  const formatDateTime = (dateStr: string) => {
-    return new Date(dateStr).toLocaleString('en-US', {
+  const formatDateTime = (date: Date) => {
+    return new Date(date).toLocaleString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -72,9 +67,14 @@ export default function TransactionsPage() {
         <button className="btn btn-primary">New Transaction</button>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center">
           <span className="loading loading-spinner loading-lg"></span>
+        </div>
+      ) : error ? (
+        <div className="alert alert-error">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span>Error loading transactions. Please try again later.</span>
         </div>
       ) : (
         <div className="overflow-x-auto bg-base-200 rounded-lg">
@@ -91,7 +91,7 @@ export default function TransactionsPage() {
               </tr>
             </thead>
             <tbody>
-              {transactions.map((transaction) => (
+              {transactions?.map((transaction) => (
                 <tr key={transaction.id}>
                   <td>{transaction.id}</td>
                   <td>{formatDateTime(transaction.date)}</td>
@@ -108,10 +108,17 @@ export default function TransactionsPage() {
                   <td className="space-x-2">
                     <button className="btn btn-sm btn-info">View</button>
                     <button className="btn btn-sm btn-warning">Print</button>
+                    <button 
+                      className="btn btn-sm btn-error"
+                      onClick={() => handleDelete(transaction.id)}
+                      disabled={deleteTransaction.isPending}
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}
-              {transactions.length === 0 && (
+              {(!transactions || transactions.length === 0) && (
                 <tr>
                   <td colSpan={7} className="text-center py-4">
                     No transactions found
