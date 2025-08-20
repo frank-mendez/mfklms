@@ -1,23 +1,51 @@
 'use client';
-
-import { useLoans, useDeleteLoan } from '@/react-query/loans';
-import { LoanStatus } from '@/types/loan';
+import { useState } from 'react';
+import { useLoans } from '@/react-query/loans';
+import { Loan } from '@/types/loan';
+import { CreateEditLoanModal, DeleteLoanModal, ViewLoanModal } from '@/components/loans';
+import { PlusIcon, EyeIcon, EditIcon, DeleteIcon, ErrorIcon, LoadingSpinner, MoneyIcon } from '@/assets/icons';
 
 export default function LoansPage() {
   const { data: loans, isLoading, error } = useLoans();
-  const deleteLoan = useDeleteLoan();
+  
+  // Modal state
+  const [isCreateEditModalOpen, setIsCreateEditModalOpen] = useState(false);
+  const [editingLoan, setEditingLoan] = useState<Loan | null>(null);
+  const [deletingLoan, setDeletingLoan] = useState<Loan | null>(null);
+  const [viewingLoan, setViewingLoan] = useState<Loan | null>(null);
 
-  const handleDelete = async (id: number) => {
-    if (confirm('Are you sure you want to delete this loan?')) {
-      try {
-        await deleteLoan.mutateAsync(id);
-      } catch (error) {
-        console.error('Error deleting loan:', error);
-      }
-    }
+  const handleOpenCreateModal = () => {
+    setEditingLoan(null);
+    setIsCreateEditModalOpen(true);
   };
 
-  const getStatusBadgeClass = (status: LoanStatus) => {
+  const handleOpenEditModal = (loan: Loan) => {
+    setEditingLoan(loan);
+    setIsCreateEditModalOpen(true);
+  };
+
+  const handleCloseCreateEditModal = () => {
+    setIsCreateEditModalOpen(false);
+    setEditingLoan(null);
+  };
+
+  const handleDelete = (loan: Loan) => {
+    setDeletingLoan(loan);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setDeletingLoan(null);
+  };
+
+  const handleView = (loan: Loan) => {
+    setViewingLoan(loan);
+  };
+
+  const handleCloseViewModal = () => {
+    setViewingLoan(null);
+  };
+
+  const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case 'ACTIVE':
         return 'badge badge-success';
@@ -41,16 +69,22 @@ export default function LoansPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Loans</h1>
-        <button className="btn btn-primary">Create Loan</button>
+        <button 
+          className="btn btn-primary"
+          onClick={handleOpenCreateModal}
+        >
+          <PlusIcon className="h-5 w-5 mr-2" />
+          Create Loan
+        </button>
       </div>
 
       {isLoading ? (
         <div className="flex justify-center">
-          <span className="loading loading-spinner loading-lg"></span>
+          <LoadingSpinner className="loading loading-spinner loading-lg" />
         </div>
       ) : error ? (
         <div className="alert alert-error">
-          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <ErrorIcon className="stroke-current shrink-0 h-6 w-6" />
           <span>Error loading loans. Please try again later.</span>
         </div>
       ) : (
@@ -87,13 +121,25 @@ export default function LoansPage() {
                     </span>
                   </td>
                   <td className="space-x-2">
-                    <button className="btn btn-sm btn-info">View</button>
-                    <button className="btn btn-sm btn-warning">Edit</button>
+                    <button 
+                      className="btn btn-sm btn-info"
+                      onClick={() => handleView(loan)}
+                    >
+                      <EyeIcon />
+                      View
+                    </button>
+                    <button 
+                      className="btn btn-sm btn-warning"
+                      onClick={() => handleOpenEditModal(loan)}
+                    >
+                      <EditIcon />
+                      Edit
+                    </button>
                     <button 
                       className="btn btn-sm btn-error"
-                      onClick={() => handleDelete(loan.id)}
-                      disabled={deleteLoan.isPending}
+                      onClick={() => handleDelete(loan)}
                     >
+                      <DeleteIcon />
                       Delete
                     </button>
                   </td>
@@ -101,8 +147,12 @@ export default function LoansPage() {
               ))}
               {(!loans || loans.length === 0) && (
                 <tr>
-                  <td colSpan={8} className="text-center py-4">
-                    No loans found
+                  <td colSpan={8} className="text-center py-8">
+                    <div className="text-gray-500">
+                      <MoneyIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p className="font-medium">No loans found</p>
+                      <p className="text-sm">Start by creating your first loan</p>
+                    </div>
                   </td>
                 </tr>
               )}
@@ -110,6 +160,24 @@ export default function LoansPage() {
           </table>
         </div>
       )}
+
+      {/* Modals */}
+      <CreateEditLoanModal
+        isOpen={isCreateEditModalOpen}
+        onClose={handleCloseCreateEditModal}
+        editingLoan={editingLoan}
+      />
+      
+      <ViewLoanModal
+        loan={viewingLoan}
+        onClose={handleCloseViewModal}
+        onEdit={handleOpenEditModal}
+      />
+      
+      <DeleteLoanModal
+        loan={deletingLoan}
+        onClose={handleCloseDeleteModal}
+      />
     </div>
   );
 }
