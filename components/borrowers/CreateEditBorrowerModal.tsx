@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useCreateBorrower, useUpdateBorrower } from '@/react-query/borrowers';
 import { CreateBorrowerData, Borrower } from '@/types/borrower';
+import { LoadingSpinner, PlusIcon, EditIcon } from '@/assets/icons';
 
 interface CreateEditBorrowerModalProps {
   isOpen: boolean;
@@ -158,14 +159,16 @@ export default function CreateEditBorrowerModal({
             >
               {(createBorrower.isPending || updateBorrower.isPending) ? (
                 <>
-                  <span className="loading loading-spinner"></span>
+                  <LoadingSpinner />
                   {editingBorrower ? 'Updating...' : 'Creating...'}
                 </>
               ) : (
                 <>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={editingBorrower ? "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" : "M12 4v16m8-8H4"} />
-                  </svg>
+                  {editingBorrower ? (
+                    <EditIcon className="h-5 w-5 mr-2" />
+                  ) : (
+                    <PlusIcon className="h-5 w-5 mr-2" />
+                  )}
                   {editingBorrower ? 'Update Borrower' : 'Add Borrower'}
                 </>
               )}
