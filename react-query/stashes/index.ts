@@ -8,7 +8,9 @@ export const useStashes = () => {
     queryFn: async (): Promise<Stash[]> => {
       const response = await fetch('/api/stashes');
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        const errorText = await response.text();
+        console.error('Fetch stashes error:', errorText);
+        throw new Error(`Failed to fetch stashes: ${errorText}`);
       }
       return response.json();
     }
@@ -22,7 +24,9 @@ export const useStash = (id: number) => {
     queryFn: async (): Promise<Stash> => {
       const response = await fetch(`/api/stashes/${id}`);
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        const errorText = await response.text();
+        console.error('Fetch stash error:', errorText);
+        throw new Error(`Failed to fetch stash: ${errorText}`);
       }
       return response.json();
     },
@@ -44,7 +48,9 @@ export const useCreateStash = () => {
         body: JSON.stringify(data)
       });
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        const errorText = await response.text();
+        console.error('Create stash error:', errorText);
+        throw new Error(`Failed to create stash: ${errorText}`);
       }
       return response.json();
     },
@@ -61,14 +67,16 @@ export const useUpdateStash = () => {
   return useMutation({
     mutationFn: async ({ id, ...data }: UpdateStashDTO): Promise<Stash> => {
       const response = await fetch(`/api/stashes/${id}`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(data)
       });
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        const errorText = await response.text();
+        console.error('Update stash error:', errorText);
+        throw new Error(`Failed to update stash: ${errorText}`);
       }
       return response.json();
     },
@@ -89,7 +97,9 @@ export const useDeleteStash = () => {
         method: 'DELETE'
       });
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        const errorText = await response.text();
+        console.error('Delete stash error:', errorText);
+        throw new Error(`Failed to delete stash: ${errorText}`);
       }
     },
     onSuccess: () => {

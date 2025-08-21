@@ -8,7 +8,9 @@ export const useRepayments = () => {
     queryFn: async (): Promise<Repayment[]> => {
       const response = await fetch('/api/repayments');
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        const errorText = await response.text();
+        console.error('Fetch repayments error:', errorText);
+        throw new Error(`Failed to fetch repayments: ${errorText}`);
       }
       return response.json();
     }
@@ -22,7 +24,9 @@ export const useRepayment = (id: number) => {
     queryFn: async (): Promise<Repayment> => {
       const response = await fetch(`/api/repayments/${id}`);
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        const errorText = await response.text();
+        console.error('Fetch repayment error:', errorText);
+        throw new Error(`Failed to fetch repayment: ${errorText}`);
       }
       return response.json();
     },
@@ -44,7 +48,9 @@ export const useCreateRepayment = () => {
         body: JSON.stringify(data)
       });
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        const errorText = await response.text();
+        console.error('Create repayment error:', errorText);
+        throw new Error(`Failed to create repayment: ${errorText}`);
       }
       return response.json();
     },
@@ -61,14 +67,16 @@ export const useUpdateRepayment = () => {
   return useMutation({
     mutationFn: async ({ id, ...data }: UpdateRepaymentDTO): Promise<Repayment> => {
       const response = await fetch(`/api/repayments/${id}`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(data)
       });
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        const errorText = await response.text();
+        console.error('Update repayment error:', errorText);
+        throw new Error(`Failed to update repayment: ${errorText}`);
       }
       return response.json();
     },
@@ -89,7 +97,9 @@ export const useDeleteRepayment = () => {
         method: 'DELETE'
       });
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        const errorText = await response.text();
+        console.error('Delete repayment error:', errorText);
+        throw new Error(`Failed to delete repayment: ${errorText}`);
       }
     },
     onSuccess: () => {

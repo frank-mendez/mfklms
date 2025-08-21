@@ -8,7 +8,9 @@ export function useLoans() {
     queryFn: async () => {
       const response = await fetch('/api/loans');
       if (!response.ok) {
-        throw new Error('Failed to fetch loans');
+        const errorText = await response.text();
+        console.error('Fetch loans error:', errorText);
+        throw new Error(`Failed to fetch loans: ${errorText}`);
       }
       return response.json();
     }
@@ -22,7 +24,9 @@ export function useLoan(id: number) {
     queryFn: async () => {
       const response = await fetch(`/api/loans/${id}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch loan');
+        const errorText = await response.text();
+        console.error('Fetch loan error:', errorText);
+        throw new Error(`Failed to fetch loan: ${errorText}`);
       }
       return response.json();
     },
@@ -45,7 +49,9 @@ export function useCreateLoan() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create loan');
+        const errorText = await response.text();
+        console.error('Create loan error:', errorText);
+        throw new Error(`Failed to create loan: ${errorText}`);
       }
 
       return response.json();
@@ -97,7 +103,8 @@ export function useDeleteLoan() {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText);
+        console.error('Delete loan error:', errorText);
+        throw new Error(`Failed to delete loan: ${errorText}`);
       }
     },
     onSuccess: () => {

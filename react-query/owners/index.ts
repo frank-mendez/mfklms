@@ -8,7 +8,9 @@ export const useOwners = () => {
     queryFn: async (): Promise<Owner[]> => {
       const response = await fetch('/api/owners');
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        const errorText = await response.text();
+        console.error('Fetch owners error:', errorText);
+        throw new Error(`Failed to fetch owners: ${errorText}`);
       }
       return response.json();
     }
@@ -22,7 +24,9 @@ export const useOwner = (id: number) => {
     queryFn: async (): Promise<Owner> => {
       const response = await fetch(`/api/owners/${id}`);
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        const errorText = await response.text();
+        console.error('Fetch owner error:', errorText);
+        throw new Error(`Failed to fetch owner: ${errorText}`);
       }
       return response.json();
     },
@@ -44,7 +48,9 @@ export const useCreateOwner = () => {
         body: JSON.stringify(data)
       });
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        const errorText = await response.text();
+        console.error('Create owner error:', errorText);
+        throw new Error(`Failed to create owner: ${errorText}`);
       }
       return response.json();
     },
@@ -61,14 +67,16 @@ export const useUpdateOwner = () => {
   return useMutation({
     mutationFn: async ({ id, ...data }: UpdateOwnerDTO): Promise<Owner> => {
       const response = await fetch(`/api/owners/${id}`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(data)
       });
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        const errorText = await response.text();
+        console.error('Update owner error:', errorText);
+        throw new Error(`Failed to update owner: ${errorText}`);
       }
       return response.json();
     },
@@ -89,7 +97,9 @@ export const useDeleteOwner = () => {
         method: 'DELETE'
       });
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        const errorText = await response.text();
+        console.error('Delete owner error:', errorText);
+        throw new Error(`Failed to delete owner: ${errorText}`);
       }
     },
     onSuccess: () => {

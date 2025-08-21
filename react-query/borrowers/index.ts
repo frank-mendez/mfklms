@@ -8,7 +8,9 @@ export function useBorrowers() {
     queryFn: async () => {
       const response = await fetch('/api/borrowers');
       if (!response.ok) {
-        throw new Error('Failed to fetch borrowers');
+        const errorText = await response.text();
+        console.error('Fetch borrowers error:', errorText);
+        throw new Error(`Failed to fetch borrowers: ${errorText}`);
       }
       return response.json();
     }
@@ -22,7 +24,9 @@ export function useBorrower(id: number) {
     queryFn: async () => {
       const response = await fetch(`/api/borrowers/${id}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch borrower');
+        const errorText = await response.text();
+        console.error('Fetch borrower error:', errorText);
+        throw new Error(`Failed to fetch borrower: ${errorText}`);
       }
       return response.json();
     },
@@ -45,7 +49,9 @@ export function useCreateBorrower() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create borrower');
+        const errorText = await response.text();
+        console.error('Create borrower error:', errorText);
+        throw new Error(`Failed to create borrower: ${errorText}`);
       }
 
       return response.json();
@@ -71,7 +77,9 @@ export function useUpdateBorrower() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update borrower');
+        const errorText = await response.text();
+        console.error('Update borrower error:', errorText);
+        throw new Error(`Failed to update borrower: ${errorText}`);
       }
 
       return response.json();
@@ -94,7 +102,9 @@ export function useDeleteBorrower() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete borrower');
+        const errorText = await response.text();
+        console.error('Delete borrower error:', errorText);
+        throw new Error(`Failed to delete borrower: ${errorText}`);
       }
     },
     onSuccess: () => {

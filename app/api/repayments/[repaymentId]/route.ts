@@ -46,8 +46,8 @@ export async function GET(
   }
 }
 
-// Update repayment (using PUT to match React Query hook)
-export async function PUT(
+// Update repayment (using PATCH for partial updates)
+export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ repaymentId: string }> }
 ) {

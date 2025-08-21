@@ -5,7 +5,7 @@ import { getCurrentUser, isAdmin } from "@/lib/auth";
 // Get specific borrower
 export async function GET(
   req: Request,
-  { params }: { params: { borrowerId: string } }
+  { params }: { params: Promise<{ borrowerId: string }> }
 ) {
   try {
     const currentUser = await getCurrentUser();
@@ -13,9 +13,10 @@ export async function GET(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    const { borrowerId } = await params;
     const borrower = await db.borrower.findUnique({
       where: {
-        id: parseInt(params.borrowerId)
+        id: parseInt(borrowerId)
       },
       include: {
         loans: {
@@ -51,7 +52,7 @@ export async function GET(
 // Update borrower
 export async function PATCH(
   req: Request,
-  { params }: { params: { borrowerId: string } }
+  { params }: { params: Promise<{ borrowerId: string }> }
 ) {
   try {
     const currentUser = await getCurrentUser();
@@ -66,9 +67,10 @@ export async function PATCH(
       return new NextResponse("Name is required", { status: 400 });
     }
 
+    const { borrowerId } = await params;
     const borrower = await db.borrower.update({
       where: {
-        id: parseInt(params.borrowerId)
+        id: parseInt(borrowerId)
       },
       data: {
         name,
@@ -85,7 +87,7 @@ export async function PATCH(
 // Delete borrower
 export async function DELETE(
   req: Request,
-  { params }: { params: { borrowerId: string } }
+  { params }: { params: Promise<{ borrowerId: string }> }
 ) {
   try {
     const isUserAdmin = await isAdmin();
@@ -93,10 +95,11 @@ export async function DELETE(
       return new NextResponse("Unauthorized", { status: 403 });
     }
 
+    const { borrowerId } = await params;
     // Check if borrower has any active loans
     const borrower = await db.borrower.findUnique({
       where: {
-        id: parseInt(params.borrowerId)
+        id: parseInt(borrowerId)
       },
       include: {
         loans: {
@@ -120,7 +123,7 @@ export async function DELETE(
 
     await db.borrower.delete({
       where: {
-        id: parseInt(params.borrowerId)
+        id: parseInt(borrowerId)
       }
     });
 

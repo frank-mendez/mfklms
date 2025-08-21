@@ -8,7 +8,9 @@ export const useTransactions = () => {
     queryFn: async (): Promise<Transaction[]> => {
       const response = await fetch('/api/transactions');
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        const errorText = await response.text();
+        console.error('Fetch transactions error:', errorText);
+        throw new Error(`Failed to fetch transactions: ${errorText}`);
       }
       return response.json();
     }
@@ -22,7 +24,9 @@ export const useTransaction = (id: number) => {
     queryFn: async (): Promise<Transaction> => {
       const response = await fetch(`/api/transactions/${id}`);
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        const errorText = await response.text();
+        console.error('Fetch transaction error:', errorText);
+        throw new Error(`Failed to fetch transaction: ${errorText}`);
       }
       return response.json();
     },
@@ -44,7 +48,9 @@ export const useCreateTransaction = () => {
         body: JSON.stringify(data)
       });
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        const errorText = await response.text();
+        console.error('Create transaction error:', errorText);
+        throw new Error(`Failed to create transaction: ${errorText}`);
       }
       return response.json();
     },
@@ -61,14 +67,16 @@ export const useUpdateTransaction = () => {
   return useMutation({
     mutationFn: async ({ id, ...data }: UpdateTransactionDTO): Promise<Transaction> => {
       const response = await fetch(`/api/transactions/${id}`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(data)
       });
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        const errorText = await response.text();
+        console.error('Update transaction error:', errorText);
+        throw new Error(`Failed to update transaction: ${errorText}`);
       }
       return response.json();
     },
@@ -89,7 +97,9 @@ export const useDeleteTransaction = () => {
         method: 'DELETE'
       });
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        const errorText = await response.text();
+        console.error('Delete transaction error:', errorText);
+        throw new Error(`Failed to delete transaction: ${errorText}`);
       }
     },
     onSuccess: () => {
