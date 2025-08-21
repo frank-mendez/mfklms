@@ -1,39 +1,52 @@
 'use client';
 
-import { useStashes, useDeleteStash } from '@/react-query/stashes';
-import { useConfirmModal } from '@/hooks/useConfirmModal';
-import { ConfirmModal } from '@/components/common';
+import { useState } from 'react';
+import { useStashes } from '@/react-query/stashes';
+import { Stash } from '@/types/stash';
+import { CreateEditStashModal, ViewStashModal, DeleteStashModal } from '@/components/stashes';
+import { ErrorModal } from '@/components/common';
+import { PlusIcon, EyeIcon, EditIcon, DeleteIcon, ErrorIcon, LoadingSpinner, MoneyIcon } from '@/assets/icons';
+import { useErrorModal } from '@/hooks';
 
 export default function StashesPage() {
   const { data: stashes, isLoading, error } = useStashes();
-  const deleteStash = useDeleteStash();
-  const { 
-    isOpen: isConfirmOpen, 
-    config: confirmConfig, 
-    isLoading: isConfirmLoading,
-    showConfirm, 
-    hideConfirm, 
-    handleConfirm 
-  } = useConfirmModal();
+  const { errorModal, showError, hideError } = useErrorModal();
+  
+  // Modal state
+  const [isCreateEditModalOpen, setIsCreateEditModalOpen] = useState(false);
+  const [editingStash, setEditingStash] = useState<Stash | null>(null);
+  const [deletingStash, setDeletingStash] = useState<Stash | null>(null);
+  const [viewingStash, setViewingStash] = useState<Stash | null>(null);
 
-  const handleDelete = (id: number) => {
-    showConfirm(
-      {
-        title: 'Delete Stash Contribution',
-        message: 'Are you sure you want to delete this stash contribution? This action cannot be undone.',
-        confirmText: 'Delete',
-        cancelText: 'Cancel',
-        confirmButtonClass: 'btn-error'
-      },
-      async () => {
-        try {
-          await deleteStash.mutateAsync(id);
-        } catch (error) {
-          console.error('Error deleting stash:', error);
-          throw error; // Re-throw to keep the modal open and show error
-        }
-      }
-    );
+  const handleOpenCreateModal = () => {
+    setEditingStash(null);
+    setIsCreateEditModalOpen(true);
+  };
+
+  const handleOpenEditModal = (stash: Stash) => {
+    setEditingStash(stash);
+    setIsCreateEditModalOpen(true);
+  };
+
+  const handleCloseCreateEditModal = () => {
+    setIsCreateEditModalOpen(false);
+    setEditingStash(null);
+  };
+
+  const handleDelete = (stash: Stash) => {
+    setDeletingStash(stash);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setDeletingStash(null);
+  };
+
+  const handleView = (stash: Stash) => {
+    setViewingStash(stash);
+  };
+
+  const handleCloseViewModal = () => {
+    setViewingStash(null);
   };
 
   const formatCurrency = (amount: number) => {
@@ -43,7 +56,7 @@ export default function StashesPage() {
     }).format(amount);
   };
 
-  const formatMonth = (date: Date) => {
+  const formatMonth = (date: Date | string) => {
     return new Date(date).toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'long'
@@ -54,16 +67,22 @@ export default function StashesPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Stash Contributions</h1>
-        <button className="btn btn-primary">Add Contribution</button>
+        <button 
+          className="btn btn-primary"
+          onClick={handleOpenCreateModal}
+        >
+          <PlusIcon className="h-5 w-5 mr-2" />
+          Add Contribution
+        </button>
       </div>
 
       {isLoading ? (
         <div className="flex justify-center">
-          <span className="loading loading-spinner loading-lg"></span>
+          <LoadingSpinner className="loading loading-spinner loading-lg" />
         </div>
       ) : error ? (
         <div className="alert alert-error">
-          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <ErrorIcon className="stroke-current shrink-0 h-6 w-6" />
           <span>Error loading stash contributions. Please try again later.</span>
         </div>
       ) : (
@@ -84,19 +103,37 @@ export default function StashesPage() {
               {stashes?.map((stash) => (
                 <tr key={stash.id}>
                   <td>{stash.id}</td>
-                  <td>{stash.owner.name}</td>
+                  <td className="font-medium">{stash.owner.name}</td>
                   <td>{formatMonth(stash.month)}</td>
-                  <td>{formatCurrency(stash.amount)}</td>
-                  <td>{stash.remarks || '-'}</td>
+                  <td className="font-bold text-success">{formatCurrency(stash.amount)}</td>
+                  <td>
+                    {stash.remarks ? (
+                      <span className="text-sm">{stash.remarks}</span>
+                    ) : (
+                      <span className="text-gray-500">-</span>
+                    )}
+                  </td>
                   <td>{new Date(stash.createdAt).toLocaleDateString()}</td>
                   <td className="space-x-2">
-                    <button className="btn btn-sm btn-info">View</button>
-                    <button className="btn btn-sm btn-warning">Edit</button>
+                    <button 
+                      className="btn btn-sm btn-info"
+                      onClick={() => handleView(stash)}
+                    >
+                      <EyeIcon />
+                      View
+                    </button>
+                    <button 
+                      className="btn btn-sm btn-warning"
+                      onClick={() => handleOpenEditModal(stash)}
+                    >
+                      <EditIcon />
+                      Edit
+                    </button>
                     <button 
                       className="btn btn-sm btn-error"
-                      onClick={() => handleDelete(stash.id)}
-                      disabled={deleteStash.isPending}
+                      onClick={() => handleDelete(stash)}
                     >
+                      <DeleteIcon />
                       Delete
                     </button>
                   </td>
@@ -104,8 +141,12 @@ export default function StashesPage() {
               ))}
               {(!stashes || stashes.length === 0) && (
                 <tr>
-                  <td colSpan={7} className="text-center py-4">
-                    No contributions found
+                  <td colSpan={7} className="text-center py-8">
+                    <div className="text-gray-500">
+                      <MoneyIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p className="font-medium">No stash contributions found</p>
+                      <p className="text-sm">Start by adding your first contribution</p>
+                    </div>
                   </td>
                 </tr>
               )}
@@ -114,16 +155,31 @@ export default function StashesPage() {
         </div>
       )}
 
-      <ConfirmModal
-        isOpen={isConfirmOpen}
-        onClose={hideConfirm}
-        onConfirm={handleConfirm}
-        title={confirmConfig.title}
-        message={confirmConfig.message}
-        confirmText={confirmConfig.confirmText}
-        cancelText={confirmConfig.cancelText}
-        confirmButtonClass={confirmConfig.confirmButtonClass}
-        isLoading={isConfirmLoading}
+      {/* Modals */}
+      <CreateEditStashModal
+        isOpen={isCreateEditModalOpen}
+        onClose={handleCloseCreateEditModal}
+        editingStash={editingStash}
+        onError={showError}
+      />
+      
+      <ViewStashModal
+        stash={viewingStash}
+        onClose={handleCloseViewModal}
+        onEdit={handleOpenEditModal}
+      />
+      
+      <DeleteStashModal
+        stash={deletingStash}
+        onClose={handleCloseDeleteModal}
+        onError={showError}
+      />
+
+      <ErrorModal
+        isOpen={errorModal.isOpen}
+        onClose={hideError}
+        title={errorModal.title}
+        message={errorModal.message}
       />
     </div>
   );
