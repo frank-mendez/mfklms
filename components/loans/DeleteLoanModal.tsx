@@ -23,7 +23,7 @@ export default function DeleteLoanModal({ loan, onClose, onError }: DeleteLoanMo
       if (onError) {
         onError(
           'Failed to Delete Loan',
-          `There was an error deleting the loan. Please try again. ${error}`,
+          `${error}`,
           error as Error
         );
       }

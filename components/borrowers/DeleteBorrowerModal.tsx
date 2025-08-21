@@ -21,10 +21,9 @@ export default function DeleteBorrowerModal({ borrower, onClose }: DeleteBorrowe
       await deleteBorrower.mutateAsync(borrower.id);
       onClose();
     } catch (error) {
-      console.error('Error deleting borrower:', error);
       showError(
         'Delete Failed',
-        `Failed to delete borrower. ${error}`,
+        `${error}`,
         error instanceof Error ? error : undefined
       );
     }
