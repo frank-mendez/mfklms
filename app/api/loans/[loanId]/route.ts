@@ -5,7 +5,7 @@ import { getCurrentUser, isAdmin } from "@/lib/auth";
 // Get specific loan
 export async function GET(
   req: Request,
-  { params }: { params: { loanId: string } }
+  { params }: { params: Promise<{ loanId: string }> }
 ) {
   try {
     const currentUser = await getCurrentUser();
@@ -13,9 +13,10 @@ export async function GET(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    const { loanId } = await params;
     const loan = await db.loan.findUnique({
       where: {
-        id: parseInt(params.loanId)
+        id: parseInt(loanId)
       },
       include: {
         borrower: {
@@ -62,7 +63,7 @@ export async function GET(
 // Update loan
 export async function PATCH(
   req: Request,
-  { params }: { params: { loanId: string } }
+  { params }: { params: Promise<{ loanId: string }> }
 ) {
   try {
     const currentUser = await getCurrentUser();
@@ -71,12 +72,14 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { interestRate, maturityDate, status } = body;
+    console.log('Received update data:', body);
+    const { borrowerId, principal, interestRate, startDate, maturityDate, status } = body;
 
+    const { loanId } = await params;
     // Validate loan exists
     const existingLoan = await db.loan.findUnique({
       where: {
-        id: parseInt(params.loanId)
+        id: parseInt(loanId)
       }
     });
 
@@ -84,20 +87,27 @@ export async function PATCH(
       return new NextResponse("Loan not found", { status: 404 });
     }
 
-    // Don't allow modifications to closed or defaulted loans
-    if (existingLoan.status !== 'ACTIVE') {
-      return new NextResponse("Cannot modify non-active loan", { status: 400 });
+    // Build update data object, filtering out undefined values
+    const updateData: any = {};
+    if (borrowerId !== undefined && borrowerId !== null) updateData.borrowerId = parseInt(borrowerId);
+    if (principal !== undefined && principal !== null) updateData.principal = principal;
+    if (interestRate !== undefined && interestRate !== null) updateData.interestRate = interestRate;
+    if (startDate && startDate !== '') updateData.startDate = new Date(startDate);
+    if (maturityDate && maturityDate !== '') updateData.maturityDate = new Date(maturityDate);
+    if (status && status !== '') updateData.status = status;
+
+    console.log('Update data to be sent to database:', updateData);
+    
+    // Ensure we have at least one field to update
+    if (Object.keys(updateData).length === 0) {
+      return new NextResponse("No valid fields to update", { status: 400 });
     }
 
     const loan = await db.loan.update({
       where: {
-        id: parseInt(params.loanId)
+        id: parseInt(loanId)
       },
-      data: {
-        interestRate: interestRate !== undefined ? interestRate : undefined,
-        maturityDate: maturityDate ? new Date(maturityDate) : undefined,
-        status: status || undefined,
-      },
+      data: updateData,
       include: {
         borrower: {
           select: {
@@ -109,6 +119,7 @@ export async function PATCH(
 
     return NextResponse.json(loan);
   } catch (error) {
+    console.error('Error updating loan:', error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
@@ -116,7 +127,7 @@ export async function PATCH(
 // Delete loan
 export async function DELETE(
   req: Request,
-  { params }: { params: { loanId: string } }
+  { params }: { params: Promise<{ loanId: string }> }
 ) {
   try {
     const isUserAdmin = await isAdmin();
@@ -124,9 +135,10 @@ export async function DELETE(
       return new NextResponse("Unauthorized", { status: 403 });
     }
 
+    const { loanId } = await params;
     const loan = await db.loan.findUnique({
       where: {
-        id: parseInt(params.loanId)
+        id: parseInt(loanId)
       },
       include: {
         repayments: true,
@@ -146,7 +158,7 @@ export async function DELETE(
     // Delete related records first (using cascade in schema)
     await db.loan.delete({
       where: {
-        id: parseInt(params.loanId)
+        id: parseInt(loanId)
       }
     });
 

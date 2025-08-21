@@ -24,12 +24,13 @@ export default function CreateEditLoanModal({
   const { data: borrowers, isLoading: borrowersLoading } = useBorrowers();
   
   // Form state
-  const [formData, setFormData] = useState<CreateLoanData>({
+  const [formData, setFormData] = useState<CreateLoanData & { status?: 'ACTIVE' | 'CLOSED' | 'DEFAULTED' }>({
     borrowerId: 0,
     principal: 0,
     interestRate: 0,
     startDate: '',
-    maturityDate: ''
+    maturityDate: '',
+    status: 'ACTIVE'
   });
   const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
 
@@ -42,7 +43,8 @@ export default function CreateEditLoanModal({
           principal: editingLoan.principal,
           interestRate: editingLoan.interestRate,
           startDate: editingLoan.startDate.split('T')[0], // Format for date input
-          maturityDate: editingLoan.maturityDate?.split('T')[0] || ''
+          maturityDate: editingLoan.maturityDate?.split('T')[0] || '',
+          status: editingLoan.status
         });
       } else {
         const today = new Date().toISOString().split('T')[0];
@@ -55,7 +57,8 @@ export default function CreateEditLoanModal({
           principal: 0,
           interestRate: 0,
           startDate: today,
-          maturityDate: defaultMaturityDate
+          maturityDate: defaultMaturityDate,
+          status: 'ACTIVE'
         });
       }
       setFormErrors({});
@@ -118,21 +121,28 @@ export default function CreateEditLoanModal({
     }
 
     try {
-      const submitData = {
-        ...formData,
-        startDate: formData.startDate,
-        maturityDate: formData.maturityDate // Now always required
-      };
-
       if (editingLoan) {
-        // Update existing loan
-        await updateLoan.mutateAsync({
+        // Update existing loan - include status
+        const updateData = {
           id: editingLoan.id,
-          ...submitData
-        });
+          borrowerId: formData.borrowerId,
+          principal: formData.principal,
+          interestRate: formData.interestRate,
+          startDate: formData.startDate,
+          maturityDate: formData.maturityDate,
+          status: formData.status
+        };
+        await updateLoan.mutateAsync(updateData);
       } else {
-        // Create new loan
-        await createLoan.mutateAsync(submitData);
+        // Create new loan - exclude status
+        const createData = {
+          borrowerId: formData.borrowerId,
+          principal: formData.principal,
+          interestRate: formData.interestRate,
+          startDate: formData.startDate,
+          maturityDate: formData.maturityDate
+        };
+        await createLoan.mutateAsync(createData);
       }
       
       // Close modal on success
@@ -141,8 +151,8 @@ export default function CreateEditLoanModal({
       console.error('Error saving loan:', error);
       const title = editingLoan ? 'Failed to Update Loan' : 'Failed to Create Loan';
       const message = editingLoan 
-        ? 'There was an error updating the loan. Please try again.' 
-        : 'There was an error creating the loan. Please try again.';
+        ? `There was an error updating the loan. Please try again. ${error}` 
+        : `There was an error creating the loan. Please try again. ${error}`;
       
       if (onError) {
         onError(title, message, error as Error);
@@ -282,6 +292,33 @@ export default function CreateEditLoanModal({
               </label>
             )}
           </div>
+
+          {/* Loan Status - Only show when editing */}
+          {editingLoan && (
+            <div className="form-control w-full mb-6">
+              <label className="label">
+                <span className="label-text">Loan Status *</span>
+              </label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleInputChange}
+                className={`select select-bordered w-full ${formErrors.status ? 'select-error' : ''}`}
+              >
+                <option value="ACTIVE">Active</option>
+                <option value="CLOSED">Closed</option>
+                <option value="DEFAULTED">Defaulted</option>
+              </select>
+              {formErrors.status && (
+                <label className="label">
+                  <span className="label-text-alt text-error">{formErrors.status}</span>
+                </label>
+              )}
+              <label className="label">
+                <span className="label-text-alt">Update the current status of this loan</span>
+              </label>
+            </div>
+          )}
 
           {/* Loan Summary Table */}
           {formData.principal > 0 && formData.interestRate >= 0 && formData.startDate && formData.maturityDate && (

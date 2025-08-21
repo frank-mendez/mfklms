@@ -71,7 +71,9 @@ export function useUpdateLoan() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update loan');
+        const errorText = await response.text();
+        console.error('Update loan error:', errorText);
+        throw new Error(`Failed to update loan: ${errorText}`);
       }
 
       return response.json();
@@ -94,7 +96,8 @@ export function useDeleteLoan() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete loan');
+        const errorText = await response.text();
+        throw new Error(errorText);
       }
     },
     onSuccess: () => {
