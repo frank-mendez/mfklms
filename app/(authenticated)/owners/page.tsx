@@ -1,55 +1,71 @@
 'use client';
 
-import { useOwners, useDeleteOwner } from '@/react-query/owners';
-import { useConfirmModal } from '@/hooks/useConfirmModal';
-import { ConfirmModal } from '@/components/common';
+import { useState } from 'react';
+import { useOwners } from '@/react-query/owners';
+import { Owner } from '@/types/owner';
+import { CreateEditOwnerModal, ViewOwnerModal, DeleteOwnerModal } from '@/components/owners';
+import { PlusIcon, EyeIcon, EditIcon, DeleteIcon, ErrorIcon, LoadingSpinner, UsersIcon } from '@/assets/icons';
 
 export default function OwnersPage() {
   const { data: owners, isLoading, error } = useOwners();
-  const deleteOwner = useDeleteOwner();
-  const { 
-    isOpen: isConfirmOpen, 
-    config: confirmConfig, 
-    isLoading: isConfirmLoading,
-    showConfirm, 
-    hideConfirm, 
-    handleConfirm 
-  } = useConfirmModal();
+  
+  // Modal state
+  const [isCreateEditModalOpen, setIsCreateEditModalOpen] = useState(false);
+  const [editingOwner, setEditingOwner] = useState<Owner | null>(null);
+  const [deletingOwner, setDeletingOwner] = useState<Owner | null>(null);
+  const [viewingOwner, setViewingOwner] = useState<Owner | null>(null);
 
-  const handleDelete = (id: number) => {
-    showConfirm(
-      {
-        title: 'Delete Owner',
-        message: 'Are you sure you want to delete this owner? This action cannot be undone.',
-        confirmText: 'Delete',
-        cancelText: 'Cancel',
-        confirmButtonClass: 'btn-error'
-      },
-      async () => {
-        try {
-          await deleteOwner.mutateAsync(id);
-        } catch (error) {
-          console.error('Error deleting owner:', error);
-          throw error; // Re-throw to keep the modal open and show error
-        }
-      }
-    );
+  const handleOpenCreateModal = () => {
+    setEditingOwner(null);
+    setIsCreateEditModalOpen(true);
+  };
+
+  const handleOpenEditModal = (owner: Owner) => {
+    setEditingOwner(owner);
+    setIsCreateEditModalOpen(true);
+  };
+
+  const handleCloseCreateEditModal = () => {
+    setIsCreateEditModalOpen(false);
+    setEditingOwner(null);
+  };
+
+  const handleDelete = (owner: Owner) => {
+    setDeletingOwner(owner);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setDeletingOwner(null);
+  };
+
+  const handleView = (owner: Owner) => {
+    setViewingOwner(owner);
+  };
+
+  const handleCloseViewModal = () => {
+    setViewingOwner(null);
   };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Stash Owners</h1>
-        <button className="btn btn-primary">Add Owner</button>
+        <h1 className="text-2xl font-bold">Owners</h1>
+        <button 
+          className="btn btn-primary"
+          onClick={handleOpenCreateModal}
+        >
+          <PlusIcon className="h-5 w-5 mr-2" />
+          Add Owner
+        </button>
       </div>
 
       {isLoading ? (
         <div className="flex justify-center">
-          <span className="loading loading-spinner loading-lg"></span>
+          <LoadingSpinner className="loading loading-spinner loading-lg" />
         </div>
       ) : error ? (
         <div className="alert alert-error">
-          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <ErrorIcon className="stroke-current shrink-0 h-6 w-6" />
           <span>Error loading owners. Please try again later.</span>
         </div>
       ) : (
@@ -68,17 +84,29 @@ export default function OwnersPage() {
               {owners?.map((owner) => (
                 <tr key={owner.id}>
                   <td>{owner.id}</td>
-                  <td>{owner.name}</td>
+                  <td className="font-medium">{owner.name}</td>
                   <td>{owner.contactInfo || '-'}</td>
                   <td>{new Date(owner.createdAt).toLocaleDateString()}</td>
                   <td className="space-x-2">
-                    <button className="btn btn-sm btn-info">View</button>
-                    <button className="btn btn-sm btn-warning">Edit</button>
+                    <button 
+                      className="btn btn-sm btn-info"
+                      onClick={() => handleView(owner)}
+                    >
+                      <EyeIcon />
+                      View
+                    </button>
+                    <button 
+                      className="btn btn-sm btn-warning"
+                      onClick={() => handleOpenEditModal(owner)}
+                    >
+                      <EditIcon />
+                      Edit
+                    </button>
                     <button 
                       className="btn btn-sm btn-error"
-                      onClick={() => handleDelete(owner.id)}
-                      disabled={deleteOwner.isPending}
+                      onClick={() => handleDelete(owner)}
                     >
+                      <DeleteIcon />
                       Delete
                     </button>
                   </td>
@@ -86,8 +114,12 @@ export default function OwnersPage() {
               ))}
               {(!owners || owners.length === 0) && (
                 <tr>
-                  <td colSpan={5} className="text-center py-4">
-                    No owners found
+                  <td colSpan={5} className="text-center py-8">
+                    <div className="text-gray-500">
+                      <UsersIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p className="font-medium">No owners found</p>
+                      <p className="text-sm">Start by adding your first owner</p>
+                    </div>
                   </td>
                 </tr>
               )}
@@ -96,16 +128,22 @@ export default function OwnersPage() {
         </div>
       )}
 
-      <ConfirmModal
-        isOpen={isConfirmOpen}
-        onClose={hideConfirm}
-        onConfirm={handleConfirm}
-        title={confirmConfig.title}
-        message={confirmConfig.message}
-        confirmText={confirmConfig.confirmText}
-        cancelText={confirmConfig.cancelText}
-        confirmButtonClass={confirmConfig.confirmButtonClass}
-        isLoading={isConfirmLoading}
+      {/* Modals */}
+      <CreateEditOwnerModal
+        isOpen={isCreateEditModalOpen}
+        onClose={handleCloseCreateEditModal}
+        editingOwner={editingOwner}
+      />
+      
+      <ViewOwnerModal
+        owner={viewingOwner}
+        onClose={handleCloseViewModal}
+        onEdit={handleOpenEditModal}
+      />
+      
+      <DeleteOwnerModal
+        owner={deletingOwner}
+        onClose={handleCloseDeleteModal}
       />
     </div>
   );
