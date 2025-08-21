@@ -6,3 +6,4 @@ export * from './transaction';
 export * from './owner';
 export * from './stash';
 export * from './auth';
+export * from './activity';

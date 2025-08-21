@@ -21,6 +21,7 @@ model User {
   verificationToken String?    @unique
   accounts          Account[]
   sessions          Session[]
+  activities        Activity[] // Relation to Activity logs
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
 
@@ -66,6 +67,41 @@ enum UserStatus {
   PENDING
   ACTIVE
   DEACTIVATED
+}
+
+enum EntityType {
+  USER
+  LOAN
+  REPAYMENT
+  STASH
+  OTHER
+}
+
+enum ActionType {
+  CREATE
+  READ
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+}
+
+model Activity {
+  id          Int        @id @default(autoincrement()) @map("log_id")
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String     @map("user_id")
+  entityType  EntityType @map("entity_type")
+  entityId    Int?       @map("entity_id")
+  actionType  ActionType @map("action_type")
+  oldValue    Json?      @map("old_value")
+  newValue    Json?      @map("new_value")
+  description String
+  timestamp   DateTime   @default(now())
+  ipAddress   String?    @map("ip_address")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@map("activities")
 }
 
 model Borrower {
