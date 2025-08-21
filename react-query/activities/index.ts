@@ -3,11 +3,21 @@ import { ActivityWithUser, CreateActivityData, ActivityFilters } from '@/types'
 
 const ACTIVITIES_QUERY_KEY = 'activities'
 
+interface ActivitiesResponse {
+  activities: ActivityWithUser[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+}
+
 // Fetch activities with filters
 export const useActivities = (filters?: ActivityFilters) => {
   return useQuery({
     queryKey: [ACTIVITIES_QUERY_KEY, filters],
-    queryFn: async (): Promise<ActivityWithUser[]> => {
+    queryFn: async (): Promise<ActivitiesResponse> => {
       const params = new URLSearchParams()
       
       if (filters?.userId) params.append('userId', filters.userId)
@@ -16,6 +26,8 @@ export const useActivities = (filters?: ActivityFilters) => {
       if (filters?.entityId) params.append('entityId', filters.entityId.toString())
       if (filters?.dateFrom) params.append('dateFrom', filters.dateFrom.toISOString())
       if (filters?.dateTo) params.append('dateTo', filters.dateTo.toISOString())
+      if (filters?.page) params.append('page', filters.page.toString())
+      if (filters?.limit) params.append('limit', filters.limit.toString())
 
       const response = await fetch(`/api/activities?${params.toString()}`)
       

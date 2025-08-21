@@ -7,7 +7,17 @@ export const getCurrentUser = async () => {
   return session?.user;
 };
 
+export const isUser = async () => {
+  const user = await getCurrentUser();
+  return user?.role === "USER";
+};
+
 export const isAdmin = async () => {
   const user = await getCurrentUser();
   return user?.role === "ADMIN";
+};
+
+export const isSuperAdmin = async () => {
+  const user = await getCurrentUser();
+  return user?.role === "SUPERADMIN";
 };

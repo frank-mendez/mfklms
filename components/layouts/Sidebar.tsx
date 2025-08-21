@@ -34,6 +34,13 @@ const navigation: NavElement[] = [
       { name: 'Contributions', href: '/stashes', icon: '💹' },
     ]
   },
+  {
+    name: 'Management',
+    items: [
+      { name: 'Users', href: '/users', icon: '👨‍💼' },
+      { name: 'Activity Logs', href: '/activities', icon: '📋' },
+    ]
+  },
 ];
 
 export default function Sidebar() {

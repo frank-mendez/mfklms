@@ -29,6 +29,8 @@ export interface ActivityFilters {
   entityId?: number
   dateFrom?: Date
   dateTo?: Date
+  page?: number
+  limit?: number
 }
 
 export interface ActivityTableData {
