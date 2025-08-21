@@ -1,19 +1,39 @@
 'use client';
 
 import { useStashes, useDeleteStash } from '@/react-query/stashes';
+import { useConfirmModal } from '@/hooks/useConfirmModal';
+import { ConfirmModal } from '@/components/common';
 
 export default function StashesPage() {
   const { data: stashes, isLoading, error } = useStashes();
   const deleteStash = useDeleteStash();
+  const { 
+    isOpen: isConfirmOpen, 
+    config: confirmConfig, 
+    isLoading: isConfirmLoading,
+    showConfirm, 
+    hideConfirm, 
+    handleConfirm 
+  } = useConfirmModal();
 
-  const handleDelete = async (id: number) => {
-    if (confirm('Are you sure you want to delete this stash contribution?')) {
-      try {
-        await deleteStash.mutateAsync(id);
-      } catch (error) {
-        console.error('Error deleting stash:', error);
+  const handleDelete = (id: number) => {
+    showConfirm(
+      {
+        title: 'Delete Stash Contribution',
+        message: 'Are you sure you want to delete this stash contribution? This action cannot be undone.',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        confirmButtonClass: 'btn-error'
+      },
+      async () => {
+        try {
+          await deleteStash.mutateAsync(id);
+        } catch (error) {
+          console.error('Error deleting stash:', error);
+          throw error; // Re-throw to keep the modal open and show error
+        }
       }
-    }
+    );
   };
 
   const formatCurrency = (amount: number) => {
@@ -93,6 +113,18 @@ export default function StashesPage() {
           </table>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        onClose={hideConfirm}
+        onConfirm={handleConfirm}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        confirmText={confirmConfig.confirmText}
+        cancelText={confirmConfig.cancelText}
+        confirmButtonClass={confirmConfig.confirmButtonClass}
+        isLoading={isConfirmLoading}
+      />
     </div>
   );
 }

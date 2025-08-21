@@ -2,6 +2,10 @@
 
 import { useState } from 'react';
 import { useRepayments, useUpdateRepayment } from '@/react-query/repayments';
+import { useCreateTransaction } from '@/react-query/transactions';
+import { useErrorModal } from '@/hooks/useErrorModal';
+import { useConfirmModal } from '@/hooks/useConfirmModal';
+import { ErrorModal, ConfirmModal } from '@/components/common';
 import { CreateEditRepaymentModal, DeleteRepaymentModal, ViewRepaymentModal } from '@/components/repayments';
 import { Repayment } from '@/types/repayment';
 import { 
@@ -20,6 +24,16 @@ import {
 export default function RepaymentsPage() {
   const { data: repayments, isLoading, error } = useRepayments();
   const updateRepayment = useUpdateRepayment();
+  const createTransaction = useCreateTransaction();
+  const { errorModal, showError, hideError } = useErrorModal();
+  const { 
+    isOpen: isConfirmOpen, 
+    config: confirmConfig, 
+    isLoading: isConfirmLoading,
+    showConfirm, 
+    hideConfirm, 
+    handleConfirm 
+  } = useConfirmModal();
 
   // Modal states
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -28,19 +42,50 @@ export default function RepaymentsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedRepayment, setSelectedRepayment] = useState<Repayment | null>(null);
 
-  const handlePayment = async (repayment: Repayment) => {
-    if (confirm('Confirm payment for this repayment?')) {
-      try {
-        await updateRepayment.mutateAsync({
-          id: repayment.id,
-          amountPaid: repayment.amountDue,
-          paymentDate: new Date(),
-          status: 'PAID'
-        });
-      } catch (error) {
-        console.error('Error recording payment:', error);
+  const handlePayment = (repayment: Repayment) => {
+    showConfirm(
+      {
+        title: 'Confirm Payment',
+        message: 'Confirm payment for this repayment? This will update the repayment status and create a transaction record.',
+        confirmText: 'Confirm Payment',
+        cancelText: 'Cancel',
+        confirmButtonClass: 'btn-success'
+      },
+      async () => {
+        try {
+          const paymentDate = new Date();
+          
+          // Update the repayment status first
+          await updateRepayment.mutateAsync({
+            id: repayment.id,
+            amountPaid: repayment.amountDue,
+            paymentDate: paymentDate,
+            status: 'PAID'
+          });
+
+          // Create a transaction record for the payment
+          await createTransaction.mutateAsync({
+            loanId: repayment.loanId,
+            transactionType: 'REPAYMENT',
+            amount: repayment.amountDue,
+            date: paymentDate
+          });
+
+          // Optional: Show success message
+          console.log('Payment recorded successfully and transaction created');
+
+        } catch (error) {
+          console.error('Error recording payment or creating transaction:', error);
+          // If repayment was updated but transaction failed, user should be notified
+          showError(
+            'Payment Processing Error',
+            'Payment was recorded but there was an issue creating the transaction record. Please check the transactions page.',
+            error instanceof Error ? error : undefined
+          );
+          throw error; // Re-throw to keep the modal open and show error
+        }
       }
-    }
+    );
   };
 
   const handleViewRepayment = (repayment: Repayment) => {
@@ -188,10 +233,10 @@ export default function RepaymentsPage() {
                       <button 
                         className="btn btn-sm btn-success"
                         onClick={() => handlePayment(repayment)}
-                        disabled={currentStatus === 'PAID' || updateRepayment.isPending}
+                        disabled={currentStatus === 'PAID' || updateRepayment.isPending || createTransaction.isPending}
                       >
                         <MoneyIcon className="h-4 w-4" />
-                        Pay
+                        {(updateRepayment.isPending || createTransaction.isPending) ? 'Processing...' : 'Pay'}
                       </button>
                       <button 
                         className="btn btn-sm btn-info"
@@ -253,6 +298,25 @@ export default function RepaymentsPage() {
         isOpen={isDeleteModalOpen}
         onClose={closeModals}
         repayment={selectedRepayment}
+      />
+
+      <ErrorModal
+        isOpen={errorModal.isOpen}
+        onClose={hideError}
+        title={errorModal.title}
+        message={errorModal.message}
+      />
+
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        onClose={hideConfirm}
+        onConfirm={handleConfirm}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        confirmText={confirmConfig.confirmText}
+        cancelText={confirmConfig.cancelText}
+        confirmButtonClass={confirmConfig.confirmButtonClass}
+        isLoading={isConfirmLoading}
       />
     </div>
   );

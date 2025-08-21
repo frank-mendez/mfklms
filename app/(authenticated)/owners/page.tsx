@@ -1,19 +1,39 @@
 'use client';
 
 import { useOwners, useDeleteOwner } from '@/react-query/owners';
+import { useConfirmModal } from '@/hooks/useConfirmModal';
+import { ConfirmModal } from '@/components/common';
 
 export default function OwnersPage() {
   const { data: owners, isLoading, error } = useOwners();
   const deleteOwner = useDeleteOwner();
+  const { 
+    isOpen: isConfirmOpen, 
+    config: confirmConfig, 
+    isLoading: isConfirmLoading,
+    showConfirm, 
+    hideConfirm, 
+    handleConfirm 
+  } = useConfirmModal();
 
-  const handleDelete = async (id: number) => {
-    if (confirm('Are you sure you want to delete this owner?')) {
-      try {
-        await deleteOwner.mutateAsync(id);
-      } catch (error) {
-        console.error('Error deleting owner:', error);
+  const handleDelete = (id: number) => {
+    showConfirm(
+      {
+        title: 'Delete Owner',
+        message: 'Are you sure you want to delete this owner? This action cannot be undone.',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        confirmButtonClass: 'btn-error'
+      },
+      async () => {
+        try {
+          await deleteOwner.mutateAsync(id);
+        } catch (error) {
+          console.error('Error deleting owner:', error);
+          throw error; // Re-throw to keep the modal open and show error
+        }
       }
-    }
+    );
   };
 
   return (
@@ -75,6 +95,18 @@ export default function OwnersPage() {
           </table>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        onClose={hideConfirm}
+        onConfirm={handleConfirm}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        confirmText={confirmConfig.confirmText}
+        cancelText={confirmConfig.cancelText}
+        confirmButtonClass={confirmConfig.confirmButtonClass}
+        isLoading={isConfirmLoading}
+      />
     </div>
   );
 }
