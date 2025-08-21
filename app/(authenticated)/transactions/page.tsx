@@ -1,23 +1,54 @@
 'use client';
 
-import { useTransactions, useDeleteTransaction } from '@/react-query/transactions';
-import { TransactionType } from '@/types/transaction';
+import { useState } from 'react';
+import { useTransactions } from '@/react-query/transactions';
+import { CreateEditTransactionModal, ViewTransactionModal, DeleteTransactionModal } from '@/components/transactions';
+import { Transaction } from '@/types/transaction';
+import { formatCurrency } from '@/utils/loans';
+import { 
+  PlusIcon, 
+  EyeIcon, 
+  EditIcon, 
+  DeleteIcon, 
+  ErrorIcon, 
+  LoadingSpinner,
+  MoneyIcon
+} from '@/assets/icons';
 
 export default function TransactionsPage() {
   const { data: transactions, isLoading, error } = useTransactions();
-  const deleteTransaction = useDeleteTransaction();
 
-  const handleDelete = async (id: number) => {
-    if (confirm('Are you sure you want to delete this transaction?')) {
-      try {
-        await deleteTransaction.mutateAsync(id);
-      } catch (error) {
-        console.error('Error deleting transaction:', error);
-      }
-    }
+  // Modal states
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+
+  const handleViewTransaction = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setIsViewModalOpen(true);
   };
 
-  const getTransactionTypeClass = (type: TransactionType) => {
+  const handleEditTransaction = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDeleteTransaction = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setIsDeleteModalOpen(true);
+  };
+
+  const closeModals = () => {
+    setIsCreateModalOpen(false);
+    setIsViewModalOpen(false);
+    setIsEditModalOpen(false);
+    setIsDeleteModalOpen(false);
+    setSelectedTransaction(null);
+  };
+
+  const getTransactionTypeClass = (type: 'DISBURSEMENT' | 'REPAYMENT') => {
     switch (type) {
       case 'DISBURSEMENT':
         return 'badge badge-warning';
@@ -49,7 +80,13 @@ export default function TransactionsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Transactions</h1>
-        <button className="btn btn-primary">New Transaction</button>
+        <button 
+          className="btn btn-primary"
+          onClick={() => setIsCreateModalOpen(true)}
+        >
+          <PlusIcon className="h-5 w-5 mr-2" />
+          New Transaction
+        </button>
       </div>
 
       {isLoading ? (
@@ -58,7 +95,7 @@ export default function TransactionsPage() {
         </div>
       ) : error ? (
         <div className="alert alert-error">
-          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <ErrorIcon className="stroke-current shrink-0 h-6 w-6" />
           <span>Error loading transactions. Please try again later.</span>
         </div>
       ) : (
@@ -91,14 +128,23 @@ export default function TransactionsPage() {
                     {formatCurrency(transaction.amount)}
                   </td>
                   <td className="space-x-2">
-                    <button className="btn btn-sm btn-info">View</button>
-                    <button className="btn btn-sm btn-warning">Print</button>
+                    <button 
+                      className="btn btn-sm btn-info"
+                      onClick={() => handleViewTransaction(transaction)}
+                    >
+                      <EyeIcon className="h-4 w-4" />
+                    </button>
+                    <button 
+                      className="btn btn-sm btn-warning"
+                      onClick={() => handleEditTransaction(transaction)}
+                    >
+                      <EditIcon className="h-4 w-4" />
+                    </button>
                     <button 
                       className="btn btn-sm btn-error"
-                      onClick={() => handleDelete(transaction.id)}
-                      disabled={deleteTransaction.isPending}
+                      onClick={() => handleDeleteTransaction(transaction)}
                     >
-                      Delete
+                      <DeleteIcon className="h-4 w-4" />
                     </button>
                   </td>
                 </tr>
@@ -114,6 +160,31 @@ export default function TransactionsPage() {
           </table>
         </div>
       )}
+
+      {/* Modals */}
+      <CreateEditTransactionModal
+        isOpen={isCreateModalOpen}
+        onClose={closeModals}
+        transaction={null}
+      />
+
+      <CreateEditTransactionModal
+        isOpen={isEditModalOpen}
+        onClose={closeModals}
+        transaction={selectedTransaction}
+      />
+
+      <ViewTransactionModal
+        isOpen={isViewModalOpen}
+        onClose={closeModals}
+        transaction={selectedTransaction}
+      />
+
+      <DeleteTransactionModal
+        isOpen={isDeleteModalOpen}
+        onClose={closeModals}
+        transaction={selectedTransaction}
+      />
     </div>
   );
 }
