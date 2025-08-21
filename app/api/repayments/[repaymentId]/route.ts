@@ -5,7 +5,7 @@ import { getCurrentUser, isAdmin } from "@/lib/auth";
 // Get specific repayment
 export async function GET(
   req: Request,
-  { params }: { params: { repaymentId: string } }
+  { params }: { params: Promise<{ repaymentId: string }> }
 ) {
   try {
     const currentUser = await getCurrentUser();
@@ -13,9 +13,10 @@ export async function GET(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    const { repaymentId } = await params;
     const repayment = await db.repayment.findUnique({
       where: {
-        id: parseInt(params.repaymentId)
+        id: parseInt(repaymentId)
       },
       include: {
         loan: {
@@ -45,10 +46,10 @@ export async function GET(
   }
 }
 
-// Update repayment
-export async function PATCH(
+// Update repayment (using PUT to match React Query hook)
+export async function PUT(
   req: Request,
-  { params }: { params: { repaymentId: string } }
+  { params }: { params: Promise<{ repaymentId: string }> }
 ) {
   try {
     const currentUser = await getCurrentUser();
@@ -57,46 +58,57 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { amountPaid, paymentDate, status } = body;
+    const { amountDue, amountPaid, dueDate, paymentDate, status } = body;
 
-    const repayment = await db.repayment.findUnique({
-      where: { id: parseInt(params.repaymentId) },
-      include: { loan: true }
+    const { repaymentId } = await params;
+    const existingRepayment = await db.repayment.findUnique({
+      where: { id: parseInt(repaymentId) },
+      include: { 
+        loan: {
+          include: {
+            borrower: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        }
+      }
     });
 
-    if (!repayment) {
+    if (!existingRepayment) {
       return new NextResponse("Repayment not found", { status: 404 });
-    }
-
-    if (repayment.loan.status !== 'ACTIVE') {
-      return new NextResponse("Cannot update repayment for non-active loan", { status: 400 });
     }
 
     const updatedRepayment = await db.repayment.update({
       where: {
-        id: parseInt(params.repaymentId)
+        id: parseInt(repaymentId)
       },
       data: {
+        amountDue: amountDue !== undefined ? amountDue : undefined,
         amountPaid: amountPaid !== undefined ? amountPaid : undefined,
+        dueDate: dueDate ? new Date(dueDate) : undefined,
         paymentDate: paymentDate ? new Date(paymentDate) : undefined,
         status: status || undefined,
+      },
+      include: {
+        loan: {
+          include: {
+            borrower: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        }
       }
     });
 
-    // If payment is made, create a transaction record
-    if (amountPaid && paymentDate) {
-      await db.transaction.create({
-        data: {
-          loanId: repayment.loanId,
-          transactionType: 'REPAYMENT',
-          amount: amountPaid,
-          date: new Date(paymentDate),
-        }
-      });
-    }
-
     return NextResponse.json(updatedRepayment);
   } catch (error) {
+    console.error('Error updating repayment:', error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
@@ -104,7 +116,7 @@ export async function PATCH(
 // Delete repayment
 export async function DELETE(
   req: Request,
-  { params }: { params: { repaymentId: string } }
+  { params }: { params: Promise<{ repaymentId: string }> }
 ) {
   try {
     const isUserAdmin = await isAdmin();
@@ -112,8 +124,9 @@ export async function DELETE(
       return new NextResponse("Unauthorized", { status: 403 });
     }
 
+    const { repaymentId } = await params;
     const repayment = await db.repayment.findUnique({
-      where: { id: parseInt(params.repaymentId) },
+      where: { id: parseInt(repaymentId) },
       include: { loan: true }
     });
 
@@ -127,7 +140,7 @@ export async function DELETE(
 
     await db.repayment.delete({
       where: {
-        id: parseInt(params.repaymentId)
+        id: parseInt(repaymentId)
       }
     });
 

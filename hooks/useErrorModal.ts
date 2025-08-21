@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 interface ErrorModalState {
   isOpen: boolean;
@@ -24,7 +24,7 @@ export const useErrorModal = (): UseErrorModalReturn => {
     message: ''
   });
 
-  const showError = (title: string, message?: string, error?: Error | string) => {
+  const showError = useCallback((title: string, message?: string, error?: Error | string) => {
     let errorMessage = message;
     
     if (!errorMessage && error) {
@@ -40,15 +40,15 @@ export const useErrorModal = (): UseErrorModalReturn => {
       title,
       message: errorMessage || 'An unexpected error occurred'
     });
-  };
+  }, []);
 
-  const hideError = () => {
+  const hideError = useCallback(() => {
     setErrorModal({
       isOpen: false,
       title: '',
       message: ''
     });
-  };
+  }, []);
 
   return {
     errorModal,
