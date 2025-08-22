@@ -16,5 +16,9 @@ export {
   CreateIcon,
   MoneyIcon,
   LightningIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  ContributionIcon,
+  LoanIcon,
+  RepaymentIcon,
+  WalletIcon
 } from './StatsIcons';

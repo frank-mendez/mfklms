@@ -2,6 +2,8 @@
 
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { ErrorIcon, CloseIcon } from '@/assets/icons/CommonIcons';
+import { FinancialSummaryReport } from '@/components/dashboard';
 
 export default function DashboardPage() {
   const searchParams = useSearchParams();
@@ -25,9 +27,7 @@ export default function DashboardPage() {
       
       {showAccessDenied && (
         <div className="alert alert-error mb-6">
-          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+          <ErrorIcon className="stroke-current shrink-0 h-6 w-6" />
           <div>
             <h3 className="font-bold">Access Denied</h3>
             <div className="text-xs">You don't have permission to access that page. Contact your administrator if you believe this is an error.</div>
@@ -36,14 +36,15 @@ export default function DashboardPage() {
             className="btn btn-sm btn-ghost"
             onClick={() => setShowAccessDenied(false)}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <CloseIcon className="h-4 w-4" />
           </button>
         </div>
       )}
 
-      {/* Your dashboard content */}
+      {/* Financial Summary Report */}
+      <FinancialSummaryReport />
+
+      {/* Additional dashboard content */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
