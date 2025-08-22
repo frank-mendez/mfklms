@@ -152,7 +152,7 @@ export default function UsersPage() {
                   <td>
                     <div className="flex items-center gap-3">
                       <div className="avatar placeholder">
-                        <div className="bg-neutral text-neutral-content rounded-full w-10">
+                        <div className="bg-neutral text-neutral-content rounded-full w-10 !flex items-center justify-center">
                           <span className="text-sm">
                             {user.firstName?.[0] || user.email[0].toUpperCase()}
                           </span>
