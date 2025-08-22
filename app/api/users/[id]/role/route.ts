@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { isAdmin } from "@/lib/auth";
+import { isSuperAdmin } from "@/lib/auth";
 import { UserRole } from '@prisma/client';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const isUserAdmin = await isAdmin();
-    if (!isUserAdmin) {
-      return new NextResponse("Unauthorized", { status: 403 });
+    const { id } = await params;
+    const userIsSuperAdmin = await isSuperAdmin();
+    if (!userIsSuperAdmin) {
+      return new NextResponse("Forbidden", { status: 403 });
     }
 
     const body = await request.json();
@@ -21,7 +22,7 @@ export async function PATCH(
     }
 
     const user = await db.user.update({
-      where: { id: params.id },
+      where: { id },
       data: { role },
       select: {
         id: true,

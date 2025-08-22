@@ -16,6 +16,15 @@ export default function SignInPage(){
   const [error, setError] = useState<string | null>(null);
 
   const callbackUrl = search.get("callbackUrl") ?? "/dashboard";
+  const message = search.get("message");
+
+  // Show success message for registration
+  const getSuccessMessage = () => {
+    if (message === "registration-success") {
+      return "Registration successful! Your account is pending approval. Please sign in.";
+    }
+    return null;
+  };
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -89,6 +98,15 @@ export default function SignInPage(){
                 placeholder="••••••••"
               />
             </div>
+
+            {getSuccessMessage() && (
+              <div className="alert alert-success">
+                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{getSuccessMessage()}</span>
+              </div>
+            )}
 
             {error && (
               <div className="alert alert-error">

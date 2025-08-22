@@ -14,7 +14,9 @@ export async function GET(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    if (currentUser.role !== "ADMIN" && currentUser.id !== id) {
+    // Only super admins can view user details
+    const userIsSuperAdmin = await isSuperAdmin();
+    if (!userIsSuperAdmin) {
       return new NextResponse("Forbidden", { status: 403 });
     }
 
@@ -55,16 +57,30 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    if (currentUser.role !== "ADMIN" && currentUser.id !== id) {
+    // Only super admins can update users
+    const userIsSuperAdmin = await isSuperAdmin();
+    if (!userIsSuperAdmin) {
       return new NextResponse("Forbidden", { status: 403 });
     }
 
     const body = await request.json();
-    const { firstName, lastName } = body;
+    const { email, firstName, lastName, role, status, password } = body;
+
+    const updateData: any = {
+      email,
+      firstName,
+      lastName,
+      role,
+      status,
+    };
+
+    if (password) {
+      updateData.password = await hash(password, 12);
+    }
 
     const user = await db.user.update({
       where: { id },
-      data: { firstName, lastName },
+      data: updateData,
       select: {
         id: true,
         email: true,

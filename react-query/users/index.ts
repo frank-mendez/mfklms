@@ -212,3 +212,30 @@ export const useDeleteUser = () => {
     },
   })
 }
+
+// Register new user (public registration)
+export const useRegisterUser = () => {
+  return useMutation({
+    mutationFn: async (userData: {
+      email: string
+      password: string
+      firstName?: string
+      lastName?: string
+    }): Promise<{ message: string; user: User }> => {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      })
+      
+      if (!response.ok) {
+        const error = await response.text()
+        throw new Error(error || 'Failed to register user')
+      }
+      
+      return response.json()
+    },
+  })
+}
