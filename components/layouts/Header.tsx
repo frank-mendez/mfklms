@@ -20,16 +20,21 @@ export default function Header() {
         <div className="dropdown dropdown-end">
       <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
        <div className="avatar avatar-placeholder">
-  <div className="bg-neutral text-neutral-content w-8 rounded-full">
-    <span className="text-xs"> {session?.user?.email?.[0]?.toUpperCase() || 'U'}</span>
-  </div>
-</div>
+          <div className="bg-neutral text-neutral-content w-8 rounded-full">
+            <span className="text-xs">{session?.user?.firstName?.[0]?.toUpperCase() || session?.user?.email?.[0]?.toUpperCase() || 'U'}</span>
+          </div>
+        </div>
       </div>
       <ul
         tabIndex={0}
         className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
         <li>
-          <span className="text-sm font-semibold">{session?.user?.email}</span>
+          <span className="text-sm font-semibold">
+            {session?.user?.firstName ? 
+              `${session.user.firstName} ${session.user.lastName || ''}`.trim() : 
+              session?.user?.email
+            }
+          </span>
         </li>
        <li><a onClick={() => signOut()}>Logout</a></li>
       </ul>

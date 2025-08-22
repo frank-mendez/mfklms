@@ -50,6 +50,8 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           role: user.role,
+          firstName: user.firstName,
+          lastName: user.lastName,
         };
       }
     })
@@ -62,6 +64,8 @@ export const authOptions: NextAuthOptions = {
           ...token,
           id: user.id,
           role: user.role,
+          firstName: user.firstName,
+          lastName: user.lastName,
         };
       }
       
@@ -70,12 +74,14 @@ export const authOptions: NextAuthOptions = {
         try {
           const dbUser = await db.user.findUnique({
             where: { id: token.id as string },
-            select: { id: true, role: true, status: true }
+            select: { id: true, role: true, status: true, firstName: true, lastName: true }
           });
           
           if (dbUser) {
             token.role = dbUser.role;
             token.status = dbUser.status;
+            token.firstName = dbUser.firstName;
+            token.lastName = dbUser.lastName;
           }
         } catch (error) {
           console.error('Error fetching user data for token:', error);
@@ -91,6 +97,8 @@ export const authOptions: NextAuthOptions = {
           ...session.user,
           id: token.id as string,
           role: token.role,
+          firstName: token.firstName as string | null,
+          lastName: token.lastName as string | null,
         }
       };
     }
