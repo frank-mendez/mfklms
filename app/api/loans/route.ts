@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser, isAdmin } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import { logCreate } from "@/lib/activity-logger";
 
 // Get all loans
@@ -43,7 +43,7 @@ export async function GET() {
     });
 
     return NextResponse.json(loans);
-  } catch (error) {
+  } catch {
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
@@ -95,13 +95,13 @@ export async function POST(req: Request) {
       'LOAN',
       loan.id,
       `Loan for ${loan.borrower.name}`,
-      {
+      JSON.stringify({
         borrowerId: loan.borrowerId,
         principal: loan.principal,
         interestRate: loan.interestRate,
         startDate: loan.startDate,
         maturityDate: loan.maturityDate
-      }
+      })
     );
 
     return NextResponse.json(loan);

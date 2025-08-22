@@ -6,7 +6,7 @@ import { logUpdate, logDelete } from "@/lib/activity-logger";
 // Get specific transaction
 export async function GET(
   req: Request,
-  { params }: { params: { transactionId: string } }
+  { params }: { params: Promise<{ transactionId: string }> }
 ) {
   try {
     const currentUser = await getCurrentUser();
@@ -14,9 +14,10 @@ export async function GET(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    const { transactionId } = await params;
     const transaction = await db.transaction.findUnique({
       where: {
-        id: parseInt(params.transactionId)
+        id: parseInt(transactionId)
       },
       include: {
         loan: {
@@ -41,7 +42,7 @@ export async function GET(
     }
 
     return NextResponse.json(transaction);
-  } catch (error) {
+  } catch {
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
@@ -49,7 +50,7 @@ export async function GET(
 // Update transaction
 export async function PATCH(
   req: Request,
-  { params }: { params: { transactionId: string } }
+  { params }: { params: Promise<{ transactionId: string }> }
 ) {
   try {
     const currentUser = await getCurrentUser();
@@ -58,11 +59,13 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 403 });
     }
 
+    const { transactionId } = await params;
+
     const body = await req.json();
     const { amount, date } = body;
 
     const transaction = await db.transaction.findUnique({
-      where: { id: parseInt(params.transactionId) },
+      where: { id: parseInt(transactionId) },
       include: { 
         loan: {
           include: {
@@ -92,7 +95,7 @@ export async function PATCH(
 
     const updatedTransaction = await db.transaction.update({
       where: {
-        id: parseInt(params.transactionId)
+        id: parseInt(transactionId)
       },
       data: {
         amount: amount !== undefined ? amount : undefined,
@@ -117,20 +120,20 @@ export async function PATCH(
       'OTHER',
       updatedTransaction.id,
       `Transaction for ${updatedTransaction.loan.borrower.name}`,
-      {
+      JSON.stringify({
         amount: transaction.amount,
         date: transaction.date,
         transactionType: transaction.transactionType
-      },
-      {
+      }),
+      JSON.stringify({
         amount: updatedTransaction.amount,
         date: updatedTransaction.date,
         transactionType: updatedTransaction.transactionType
-      }
+      })
     );
 
     return NextResponse.json(updatedTransaction);
-  } catch (error) {
+  } catch {
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
@@ -138,7 +141,7 @@ export async function PATCH(
 // Delete transaction
 export async function DELETE(
   req: Request,
-  { params }: { params: { transactionId: string } }
+  { params }: { params: Promise<{ transactionId: string }> }
 ) {
   try {
     const currentUser = await getCurrentUser();
@@ -147,8 +150,9 @@ export async function DELETE(
       return new NextResponse("Unauthorized", { status: 403 });
     }
 
+    const { transactionId } = await params;
     const transaction = await db.transaction.findUnique({
-      where: { id: parseInt(params.transactionId) },
+      where: { id: parseInt(transactionId) },
       include: { 
         loan: {
           include: {
@@ -178,7 +182,7 @@ export async function DELETE(
 
     await db.transaction.delete({
       where: {
-        id: parseInt(params.transactionId)
+        id: parseInt(transactionId)
       }
     });
 
@@ -188,15 +192,15 @@ export async function DELETE(
       'OTHER',
       transaction.id,
       `Transaction for ${transaction.loan.borrower.name}`,
-      {
+      JSON.stringify({
         amount: transaction.amount,
         date: transaction.date,
         transactionType: transaction.transactionType
-      }
+      })
     );
 
     return new NextResponse(null, { status: 204 });
-  } catch (error) {
+  } catch {
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

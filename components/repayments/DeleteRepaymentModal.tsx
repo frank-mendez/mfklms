@@ -4,7 +4,6 @@ import { useDeleteRepayment } from '@/react-query/repayments';
 import { useErrorModal } from '@/hooks/useErrorModal';
 import { ErrorModal } from '@/components/common';
 import { Repayment } from '@/types/repayment';
-import { formatCurrency } from '@/utils/loans';
 import { LoadingSpinner } from '@/assets/icons';
 
 interface DeleteRepaymentModalProps {

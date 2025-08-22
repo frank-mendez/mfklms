@@ -61,8 +61,8 @@ export async function PATCH(
       'USER',
       Math.abs(user.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0)), // Convert string ID to number
       `User ${user.firstName} ${user.lastName}`,
-      { role: oldUser.role },
-      { role: user.role }
+      JSON.stringify({ role: oldUser.role }),
+      JSON.stringify({ role: user.role })
     );
 
     return NextResponse.json(user);

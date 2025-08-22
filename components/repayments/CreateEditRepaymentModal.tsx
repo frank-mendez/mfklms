@@ -55,9 +55,8 @@ export default function CreateEditRepaymentModal({
         });
       }
       setFormErrors({});
-      hideError();
     }
-  }, [isOpen, editingRepayment]); // Removed hideError from dependencies
+  }, [isOpen, editingRepayment]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;

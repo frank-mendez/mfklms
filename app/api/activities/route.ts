@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { EntityType, ActionType } from '@prisma/client'
+import { EntityType, ActionType, Prisma } from '@prisma/client'
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '50')
 
-    const where: any = {}
+    const where: Prisma.ActivityWhereInput = {}
 
     if (userId) where.userId = userId
     if (entityType) where.entityType = entityType

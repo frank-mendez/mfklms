@@ -4,15 +4,12 @@ import { useState } from 'react';
 import { useTransactions } from '@/react-query/transactions';
 import { CreateEditTransactionModal, ViewTransactionModal, DeleteTransactionModal } from '@/components/transactions';
 import { Transaction } from '@/types/transaction';
-import { formatCurrency } from '@/utils/loans';
 import { 
   PlusIcon, 
   EyeIcon, 
   EditIcon, 
   DeleteIcon, 
-  ErrorIcon, 
-  LoadingSpinner,
-  MoneyIcon
+  ErrorIcon
 } from '@/assets/icons';
 
 export default function TransactionsPage() {

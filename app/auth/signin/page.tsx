@@ -52,7 +52,7 @@ export default function SignInPage(){
         // Fallback
         router.push(callbackUrl);
       }
-    } catch (err) {
+    } catch {
       setError("Something went wrong. Please try again.");
       setLoading(false);
     }
@@ -135,7 +135,7 @@ export default function SignInPage(){
             </div>
 
             <div className="text-center mt-4">
-              <span className="text-sm">Don't have an account? </span>
+              <span className="text-sm">Don&apos;t have an account? </span>
               <Link href="/auth/register" className="link link-primary text-sm">
                 Sign up here
               </Link>

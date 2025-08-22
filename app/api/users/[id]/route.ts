@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser, isAdmin, isSuperAdmin } from "@/lib/auth";
+import { getCurrentUser, isSuperAdmin } from "@/lib/auth";
 import { hash } from "bcryptjs";
 import { logUpdate, logDelete } from "@/lib/activity-logger";
+import { Prisma } from "@prisma/client";
 
 export async function GET(
   request: NextRequest,
@@ -85,7 +86,7 @@ export async function PATCH(
     const body = await request.json();
     const { email, firstName, lastName, role, status, password } = body;
 
-    const updateData: any = {
+    const updateData: Prisma.UserUpdateInput = {
       email,
       firstName,
       lastName,
@@ -119,20 +120,20 @@ export async function PATCH(
       'USER',
       Math.abs(user.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0)), // Convert string ID to number
       `User ${user.firstName} ${user.lastName}`,
-      {
+      JSON.stringify({
         email: oldUser.email,
         firstName: oldUser.firstName,
         lastName: oldUser.lastName,
         role: oldUser.role,
         status: oldUser.status
-      },
-      {
+      }),
+      JSON.stringify({
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
         status: user.status
-      }
+      })
     );
 
     return NextResponse.json(user);
@@ -179,7 +180,7 @@ export async function PUT(
     const body = await request.json();
     const { email, firstName, lastName, role, status, password } = body;
 
-    const updateData: any = {
+    const updateData: Prisma.UserUpdateInput = {
       email,
       firstName,
       lastName,
@@ -213,20 +214,20 @@ export async function PUT(
       'USER',
       Math.abs(user.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0)), // Convert string ID to number
       `User ${user.firstName} ${user.lastName}`,
-      {
+      JSON.stringify({
         email: oldUser.email,
         firstName: oldUser.firstName,
         lastName: oldUser.lastName,
         role: oldUser.role,
         status: oldUser.status
-      },
-      {
+      }),
+      JSON.stringify({
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
         status: user.status
-      }
+      })
     );
 
     return NextResponse.json(user);
@@ -284,13 +285,13 @@ export async function DELETE(
       'USER',
       Math.abs(user.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0)), // Convert string ID to number
       `User ${user.firstName} ${user.lastName}`,
-      {
+      JSON.stringify({
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
         status: user.status
-      }
+      })
     );
 
     return new NextResponse(null, { status: 204 });

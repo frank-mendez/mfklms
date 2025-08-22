@@ -26,8 +26,8 @@ export default function DeleteUserModal({
     try {
       await deleteUserMutation.mutateAsync(user.id)
       onClose()
-    } catch (error: any) {
-      showError('Delete Failed', error.message)
+    } catch {
+      showError('Delete Failed')
     }
   }
 

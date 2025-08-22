@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser, isAdmin } from "@/lib/auth";
 import { logUpdate, logDelete } from "@/lib/activity-logger";
+import { Prisma } from "@prisma/client";
 
 // Get specific loan
 export async function GET(
@@ -56,8 +57,8 @@ export async function GET(
     }
 
     return NextResponse.json(loan);
-  } catch (error) {
-    return new NextResponse("Internal Error", { status: 500 });
+  } catch {
+    return new NextResponse(`Internal Error`, { status: 500 });
   }
 }
 
@@ -89,8 +90,8 @@ export async function PATCH(
     }
 
     // Build update data object, filtering out undefined values
-    const updateData: any = {};
-    if (borrowerId !== undefined && borrowerId !== null) updateData.borrowerId = parseInt(borrowerId);
+    const updateData: Prisma.LoanUpdateInput = {};
+    if (borrowerId !== undefined && borrowerId !== null) updateData.borrower = { connect: { id: parseInt(borrowerId) } };
     if (principal !== undefined && principal !== null) updateData.principal = principal;
     if (interestRate !== undefined && interestRate !== null) updateData.interestRate = interestRate;
     if (startDate && startDate !== '') updateData.startDate = new Date(startDate);
@@ -124,8 +125,8 @@ export async function PATCH(
       'LOAN',
       loan.id,
       `Loan for ${loan.borrower.name}`,
-      existingLoan,
-      updateData
+      JSON.stringify(existingLoan),
+      JSON.stringify(updateData)
     );
 
     return NextResponse.json(loan);
@@ -178,12 +179,12 @@ export async function DELETE(
       'LOAN',
       loan.id,
       `Loan for ${loan.borrower.name}`,
-      {
+      JSON.stringify({
         borrowerId: loan.borrowerId,
         principal: loan.principal,
         interestRate: loan.interestRate,
         status: loan.status
-      }
+      })
     );
 
     // Delete related records first (using cascade in schema)
@@ -194,7 +195,7 @@ export async function DELETE(
     });
 
     return new NextResponse(null, { status: 204 });
-  } catch (error) {
+  } catch {
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

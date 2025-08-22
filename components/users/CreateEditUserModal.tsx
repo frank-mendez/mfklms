@@ -92,10 +92,9 @@ export default function CreateEditUserModal({
         })
       }
       onClose()
-    } catch (error: any) {
+    } catch {
       showError(
-        isEditing ? 'Update Failed' : 'Creation Failed',
-        error.message
+        isEditing ? 'Update Failed' : 'Creation Failed'
       )
     }
   }

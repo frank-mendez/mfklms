@@ -52,7 +52,7 @@ export default function DeleteOwnerModal({
           </div>
           
           <p className="mb-4">
-            Are you sure you want to delete the owner <strong>"{owner.name}"</strong>?
+            Are you sure you want to delete the owner <strong>&quot;{owner.name}&quot;</strong>?
           </p>
           
           <div className="bg-base-200 p-4 rounded-lg">

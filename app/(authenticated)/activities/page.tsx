@@ -19,7 +19,7 @@ export default function ActivitiesPage() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   
-  const { errorModal, showError, hideError } = useErrorModal()
+  const { errorModal, hideError } = useErrorModal()
   
   const { data: activitiesResponse, isLoading, error } = useActivities({
     page: currentPage,
@@ -37,7 +37,7 @@ export default function ActivitiesPage() {
       <div className="alert alert-error">
         <div>
           <h3 className="font-bold">Access Denied</h3>
-          <div className="text-xs">You don't have permission to access activity logs. Only super admins can view activity logs.</div>
+          <div className="text-xs">You don&apos;t have permission to access activity logs. Only super admins can view activity logs.</div>
         </div>
       </div>
     )

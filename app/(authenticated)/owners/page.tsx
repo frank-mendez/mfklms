@@ -23,7 +23,7 @@ export default function OwnersPage() {
       <div className="alert alert-error">
         <div>
           <h3 className="font-bold">Access Denied</h3>
-          <div className="text-xs">You don't have permission to access stash management. Only admins and super admins can access this section.</div>
+          <div className="text-xs">You don&apos;t have permission to access stash management. Only admins and super admins can access this section.</div>
         </div>
       </div>
     )

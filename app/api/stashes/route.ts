@@ -80,12 +80,12 @@ export async function POST(request: Request) {
       'STASH',
       stash.id,
       `Stash contribution by ${stash.owner.name}`,
-      {
+      JSON.stringify({
         ownerId: stash.ownerId,
         month: stash.month,
         amount: stash.amount,
         remarks: stash.remarks
-      }
+      })  
     );
 
     return NextResponse.json(stash, { status: 201 });

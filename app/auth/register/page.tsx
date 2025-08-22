@@ -55,8 +55,8 @@ export default function RegisterPage() {
         router.push("/auth/signin?message=registration-success");
       }, 3000);
 
-    } catch (error: any) {
-      showError("Registration Failed", error.message);
+    } catch {
+      showError("Registration Failed");
     }
   }
 

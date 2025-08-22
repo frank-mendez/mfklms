@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser, isAdmin } from "@/lib/auth";
-import { logCreate } from "@/lib/activity-logger";
+import { getCurrentUser } from "@/lib/auth";
 
 // Get all repayments
 export async function GET() {
@@ -32,7 +31,7 @@ export async function GET() {
     });
 
     return NextResponse.json(repayments);
-  } catch (error) {
+  } catch {
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
@@ -86,7 +85,7 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json(repayment);
-  } catch (error) {
+  } catch {
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

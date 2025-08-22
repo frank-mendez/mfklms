@@ -7,8 +7,8 @@ interface CreateActivityLogOptions {
   entityType: EntityType
   entityId?: number
   actionType: ActionType
-  oldValue?: any
-  newValue?: any
+  oldValue?: string
+  newValue?: string
   description: string
 }
 
@@ -67,7 +67,7 @@ export async function logCreate(
   entityType: EntityType,
   entityId: number,
   entityName: string,
-  newValue: any
+  newValue: string
 ) {
   if (!userId) {
     console.error('Cannot log CREATE activity: userId is required')
@@ -89,8 +89,8 @@ export async function logUpdate(
   entityType: EntityType,
   entityId: number,
   entityName: string,
-  oldValue: any,
-  newValue: any
+  oldValue: string,
+  newValue: string
 ) {
   return createActivityLog({
     userId,
@@ -108,7 +108,7 @@ export async function logDelete(
   entityType: EntityType,
   entityId: number,
   entityName: string,
-  oldValue: any
+  oldValue: string
 ) {
   return createActivityLog({
     userId,

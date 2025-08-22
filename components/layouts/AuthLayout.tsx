@@ -9,7 +9,7 @@ export default function AuthLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { data: session } = useSession();
+  useSession();
 
   return (
     <div className="min-h-screen bg-base-100">

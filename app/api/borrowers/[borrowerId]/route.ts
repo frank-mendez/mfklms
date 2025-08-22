@@ -45,7 +45,7 @@ export async function GET(
     }
 
     return NextResponse.json(borrower);
-  } catch (error) {
+  } catch {
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
@@ -95,12 +95,12 @@ export async function PATCH(
       'OTHER', // Using OTHER since borrower doesn't have specific entity type
       borrower.id,
       borrower.name,
-      { name: currentBorrower.name, contactInfo: currentBorrower.contactInfo },
-      { name: borrower.name, contactInfo: borrower.contactInfo }
+      JSON.stringify({ name: currentBorrower.name, contactInfo: currentBorrower.contactInfo }),
+      JSON.stringify({ name: borrower.name, contactInfo: borrower.contactInfo })
     );
 
     return NextResponse.json(borrower);
-  } catch (error) {
+  } catch {
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
@@ -149,7 +149,7 @@ export async function DELETE(
       'OTHER',
       borrower.id,
       borrower.name,
-      { name: borrower.name, contactInfo: borrower.contactInfo }
+      JSON.stringify({ name: borrower.name, contactInfo: borrower.contactInfo })
     );
 
     await db.borrower.delete({
@@ -159,7 +159,7 @@ export async function DELETE(
     });
 
     return new NextResponse(null, { status: 204 });
-  } catch (error) {
+  } catch {
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

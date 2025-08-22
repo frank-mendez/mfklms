@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser, isAdmin } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import { logCreate } from "@/lib/activity-logger";
 
 // Get all transactions
@@ -32,7 +32,7 @@ export async function GET() {
     });
 
     return NextResponse.json(transactions);
-  } catch (error) {
+  } catch {
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
@@ -109,16 +109,16 @@ export async function POST(req: Request) {
       'OTHER',
       transaction.id,
       `Transaction for ${transaction.loan.borrower.name}`,
-      {
+      JSON.stringify({
         loanId: transaction.loanId,
         transactionType: transaction.transactionType,
         amount: transaction.amount,
         date: transaction.date
-      }
+      })
     );
 
     return NextResponse.json(transaction);
-  } catch (error) {
+  } catch {
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       'OTHER',
       owner.id,
       owner.name,
-      { name: owner.name, contactInfo: owner.contactInfo }
+      JSON.stringify({ name: owner.name, contactInfo: owner.contactInfo })
     );
 
     return NextResponse.json(owner, { status: 201 });

@@ -6,12 +6,13 @@ import { logUpdate, logDelete } from '@/lib/activity-logger';
 // GET /api/owners/[ownerId] - Get a specific owner
 export async function GET(
   request: Request,
-  { params }: { params: { ownerId: string } }
+  { params }: { params: Promise<{ ownerId: string }> }
 ) {
   try {
-    const ownerId = parseInt(params.ownerId);
+    const { ownerId } = await params;
+    const ownerIdNum = parseInt(ownerId);
     const owner = await db.owner.findUnique({
-      where: { id: ownerId }
+      where: { id: ownerIdNum }
     });
 
     if (!owner) {
@@ -34,7 +35,7 @@ export async function GET(
 // PATCH /api/owners/[ownerId] - Update a specific owner
 export async function PATCH(
   request: Request,
-  { params }: { params: { ownerId: string } }
+  { params }: { params: Promise<{ ownerId: string }> }
 ) {
   try {
     const currentUser = await getCurrentUser();
@@ -43,7 +44,8 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 403 });
     }
 
-    const ownerId = parseInt(params.ownerId);
+    const { ownerId } = await params;
+    const ownerIdNum = parseInt(ownerId);
     const body = await request.json();
     const { name, contactInfo } = body;
 
@@ -56,7 +58,7 @@ export async function PATCH(
 
     // Get the old owner data for logging
     const oldOwner = await db.owner.findUnique({
-      where: { id: ownerId }
+      where: { id: ownerIdNum }
     });
 
     if (!oldOwner) {
@@ -67,7 +69,7 @@ export async function PATCH(
     }
 
     const owner = await db.owner.update({
-      where: { id: ownerId },
+      where: { id: ownerIdNum },
       data: {
         name,
         contactInfo
@@ -80,14 +82,14 @@ export async function PATCH(
       'OTHER',
       owner.id,
       `Owner ${owner.name}`,
-      {
+     JSON.stringify( {
         name: oldOwner.name,
         contactInfo: oldOwner.contactInfo
-      },
-      {
+      }),
+      JSON.stringify({
         name: owner.name,
         contactInfo: owner.contactInfo
-      }
+      })
     );
 
     return NextResponse.json(owner);
@@ -103,7 +105,7 @@ export async function PATCH(
 // DELETE /api/owners/[ownerId] - Delete a specific owner
 export async function DELETE(
   request: Request,
-  { params }: { params: { ownerId: string } }
+  { params }: { params: Promise<{ ownerId: string }> }
 ) {
   try {
     const currentUser = await getCurrentUser();
@@ -112,11 +114,12 @@ export async function DELETE(
       return new NextResponse("Unauthorized", { status: 403 });
     }
 
-    const ownerId = parseInt(params.ownerId);
+    const { ownerId } = await params;
+    const ownerIdNum = parseInt(ownerId);
     
     // Get the owner data for logging before deletion
     const owner = await db.owner.findUnique({
-      where: { id: ownerId }
+      where: { id: ownerIdNum }
     });
 
     if (!owner) {
@@ -127,7 +130,7 @@ export async function DELETE(
     }
 
     await db.owner.delete({
-      where: { id: ownerId }
+      where: { id: ownerIdNum }
     });
 
     // Log the deletion
@@ -136,10 +139,10 @@ export async function DELETE(
       'OTHER',
       owner.id,
       `Owner ${owner.name}`,
-      {
+      JSON.stringify({
         name: owner.name,
         contactInfo: owner.contactInfo
-      }
+      })
     );
 
     return new NextResponse(null, { status: 204 });

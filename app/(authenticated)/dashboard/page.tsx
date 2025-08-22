@@ -30,7 +30,7 @@ export default function DashboardPage() {
           <ErrorIcon className="stroke-current shrink-0 h-6 w-6" />
           <div>
             <h3 className="font-bold">Access Denied</h3>
-            <div className="text-xs">You don't have permission to access that page. Contact your administrator if you believe this is an error.</div>
+            <div className="text-xs">You don&apos;t have permission to access that page. Contact your administrator if you believe this is an error.</div>
           </div>
           <button 
             className="btn btn-sm btn-ghost"

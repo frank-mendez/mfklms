@@ -33,6 +33,9 @@ export default function CreateEditTransactionModal({
     date: new Date().toISOString().split('T')[0]
   });
 
+  type FormDataKey = keyof typeof formData;
+  type FormDataValue = typeof formData[FormDataKey];
+
   // Reset form when modal opens/closes or transaction changes
   useEffect(() => {
     if (isOpen) {
@@ -94,7 +97,7 @@ export default function CreateEditTransactionModal({
     }
   };
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: FormDataKey, value: FormDataValue) => {
     setFormData(prev => ({
       ...prev,
       [field]: value

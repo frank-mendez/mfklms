@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser, isAdmin } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import { logCreate } from "@/lib/activity-logger";
 
 // Get all borrowers
@@ -27,7 +27,7 @@ export async function GET() {
     });
 
     return NextResponse.json(borrowers);
-  } catch (error) {
+  } catch {
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
@@ -60,11 +60,14 @@ export async function POST(req: Request) {
       'USER', // Note: USER is used since Prisma schema shows only USER, LOAN, REPAYMENT, STASH, OTHER
       borrower.id,
       borrower.name,
-      { name: borrower.name, contactInfo: borrower.contactInfo }
+      JSON.stringify({
+        name: borrower.name,
+        contactInfo: borrower.contactInfo
+      })
     );
 
     return NextResponse.json(borrower);
-  } catch (error) {
+  } catch {
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

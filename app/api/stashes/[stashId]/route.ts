@@ -6,12 +6,13 @@ import { logUpdate, logDelete } from '@/lib/activity-logger';
 // GET /api/stashes/[stashId] - Get a specific stash contribution
 export async function GET(
   request: Request,
-  { params }: { params: { stashId: string } }
+  { params }: { params: Promise<{ stashId: string }> }
 ) {
   try {
-    const stashId = parseInt(params.stashId);
+    const { stashId } = await params;
+    const stashIdNum = parseInt(stashId);
     const stash = await db.stash.findUnique({
-      where: { id: stashId },
+      where: { id: stashIdNum },
       include: {
         owner: {
           select: {
@@ -41,7 +42,7 @@ export async function GET(
 // PATCH /api/stashes/[stashId] - Update a specific stash contribution
 export async function PATCH(
   request: Request,
-  { params }: { params: { stashId: string } }
+  { params }: { params: Promise<{ stashId: string }> }
 ) {
   try {
     const currentUser = await getCurrentUser();
@@ -50,7 +51,8 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 403 });
     }
 
-    const stashId = parseInt(params.stashId);
+    const { stashId } = await params;
+    const stashIdNum = parseInt(stashId);
     const body = await request.json();
     const { ownerId, month, amount, remarks } = body;
 
@@ -75,7 +77,7 @@ export async function PATCH(
 
     // Get the old stash data for logging
     const oldStash = await db.stash.findUnique({
-      where: { id: stashId },
+      where: { id: stashIdNum },
       include: {
         owner: {
           select: {
@@ -93,7 +95,7 @@ export async function PATCH(
     }
 
     const stash = await db.stash.update({
-      where: { id: stashId },
+      where: { id: stashIdNum },
       data: {
         ownerId: parseInt(ownerId),
         month: new Date(month),
@@ -115,18 +117,18 @@ export async function PATCH(
       'STASH',
       stash.id,
       `Stash contribution for ${stash.owner.name}`,
-      {
+      JSON.stringify({
         ownerId: oldStash.ownerId,
         month: oldStash.month,
         amount: oldStash.amount,
         remarks: oldStash.remarks
-      },
-      {
+      }),
+      JSON.stringify({
         ownerId: stash.ownerId,
         month: stash.month,
         amount: stash.amount,
         remarks: stash.remarks
-      }
+      })
     );
 
     return NextResponse.json(stash);
@@ -142,7 +144,7 @@ export async function PATCH(
 // DELETE /api/stashes/[stashId] - Delete a specific stash contribution
 export async function DELETE(
   request: Request,
-  { params }: { params: { stashId: string } }
+  { params }: { params: Promise<{ stashId: string }> }
 ) {
   try {
     const currentUser = await getCurrentUser();
@@ -151,11 +153,12 @@ export async function DELETE(
       return new NextResponse("Unauthorized", { status: 403 });
     }
 
-    const stashId = parseInt(params.stashId);
+    const { stashId } = await params;
+    const stashIdNum = parseInt(stashId);
     
     // Get the stash data for logging before deletion
     const stash = await db.stash.findUnique({
-      where: { id: stashId },
+      where: { id: stashIdNum },
       include: {
         owner: {
           select: {
@@ -173,7 +176,7 @@ export async function DELETE(
     }
 
     await db.stash.delete({
-      where: { id: stashId }
+      where: { id: stashIdNum }
     });
 
     // Log the deletion
@@ -182,12 +185,12 @@ export async function DELETE(
       'STASH',
       stash.id,
       `Stash contribution for ${stash.owner.name}`,
-      {
+      JSON.stringify({
         ownerId: stash.ownerId,
         month: stash.month,
         amount: stash.amount,
         remarks: stash.remarks
-      }
+      })
     );
 
     return new NextResponse(null, { status: 204 });

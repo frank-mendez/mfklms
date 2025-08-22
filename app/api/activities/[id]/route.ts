@@ -3,8 +3,8 @@ import { getCurrentUser } from '@/lib/auth'
 import { db } from '@/lib/db'
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const currentUser = await getCurrentUser()
@@ -12,13 +12,14 @@ export async function GET(
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
 
-    const id = parseInt(params.id)
-    if (isNaN(id)) {
+    const { id } = await params
+    const activityId = parseInt(id)
+    if (isNaN(activityId)) {
       return NextResponse.json({ message: 'Invalid ID' }, { status: 400 })
     }
 
     const activity = await db.activity.findUnique({
-      where: { id },
+      where: { id: activityId },
       include: {
         user: {
           select: {
@@ -36,8 +37,8 @@ export async function GET(
     }
 
     return NextResponse.json(activity)
-  } catch (error) {
-    console.error('Error fetching activity:', error)
+  } catch {
+    console.error('Error fetching activity:')
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }

@@ -32,7 +32,7 @@ export default function ViewTransactionModal({
   };
 
   const getTransactionTypeIcon = (type: 'DISBURSEMENT' | 'REPAYMENT') => {
-    return <MoneyIcon className="h-4 w-4" />;
+    return type === 'DISBURSEMENT' ? <MoneyIcon className="h-4 w-4" /> : <MoneyIcon className="h-4 w-4" />;
   };
 
   return (

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser, isAdmin, isSuperAdmin } from "@/lib/auth";
+import { getCurrentUser, isSuperAdmin } from "@/lib/auth";
 import { hash } from "bcryptjs";
-import { UserStatus, UserRole } from '@prisma/client';
+import { UserStatus, UserRole, Prisma } from '@prisma/client';
 import { logCreate } from "@/lib/activity-logger";
 
 // GET all users with pagination and filters
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     const role = searchParams.get('role') as UserRole;
     const search = searchParams.get('search');
 
-    const where: any = {};
+    const where: Prisma.UserWhereInput = {};
 
     if (status) where.status = status;
     if (role) where.role = role;
@@ -123,13 +123,13 @@ export async function POST(req: Request) {
       'USER',
       Math.abs(user.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0)), // Convert string ID to number
       `User ${user.firstName} ${user.lastName}`,
-      {
+      JSON.stringify({
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
         status: user.status
-      }
+      })
     );
 
     console.log('User created and logged:', logCreated);

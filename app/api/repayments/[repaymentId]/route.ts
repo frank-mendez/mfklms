@@ -42,7 +42,7 @@ export async function GET(
     }
 
     return NextResponse.json(repayment);
-  } catch (error) {
+  } catch {
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
@@ -113,20 +113,20 @@ export async function PATCH(
       'REPAYMENT',
       updatedRepayment.id,
       `Repayment for ${updatedRepayment.loan.borrower.name}`,
-      {
+      JSON.stringify({
         amountDue: existingRepayment.amountDue,
         amountPaid: existingRepayment.amountPaid,
         dueDate: existingRepayment.dueDate,
         paymentDate: existingRepayment.paymentDate,
         status: existingRepayment.status
-      },
-      {
+      }),
+      JSON.stringify({
         amountDue: updatedRepayment.amountDue,
         amountPaid: updatedRepayment.amountPaid,
         dueDate: updatedRepayment.dueDate,
         paymentDate: updatedRepayment.paymentDate,
         status: updatedRepayment.status
-      }
+      })
     );
 
     return NextResponse.json(updatedRepayment);
@@ -184,17 +184,17 @@ export async function DELETE(
       'REPAYMENT',
       repayment.id,
       `Repayment for ${repayment.loan.borrower.name}`,
-      {
+      JSON.stringify({
         amountDue: repayment.amountDue,
         amountPaid: repayment.amountPaid,
         dueDate: repayment.dueDate,
         paymentDate: repayment.paymentDate,
         status: repayment.status
-      }
+      })
     );
 
     return new NextResponse(null, { status: 204 });
-  } catch (error) {
+  } catch {
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
