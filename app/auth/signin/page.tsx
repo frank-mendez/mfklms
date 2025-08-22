@@ -4,6 +4,7 @@ import { useState, FormEvent } from "react";
 import { signIn } from "next-auth/react";
 import type { SignInResponse } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 export default function SignInPage(){
   const router = useRouter();
@@ -113,6 +114,13 @@ export default function SignInPage(){
                   'Sign in'
                 )}
               </button>
+            </div>
+
+            <div className="text-center mt-4">
+              <span className="text-sm">Don't have an account? </span>
+              <Link href="/auth/register" className="link link-primary text-sm">
+                Sign up here
+              </Link>
             </div>
           </form>
         </div>

@@ -117,3 +117,98 @@ export const useUser = (id: string) => {
     enabled: !!id,
   })
 }
+
+// Create user
+export const useCreateUser = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: async (userData: {
+      email: string
+      password: string
+      firstName?: string
+      lastName?: string
+      role?: UserRole
+      status?: UserStatus
+    }): Promise<User> => {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Failed to create user')
+      }
+      
+      return response.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [USERS_QUERY_KEY] })
+    },
+  })
+}
+
+// Update user (full update)
+export const useUpdateUser = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: async ({ 
+      id, 
+      userData 
+    }: { 
+      id: string
+      userData: {
+        email?: string
+        firstName?: string
+        lastName?: string
+        role?: UserRole
+        status?: UserStatus
+        password?: string
+      }
+    }): Promise<User> => {
+      const response = await fetch(`/api/users/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Failed to update user')
+      }
+      
+      return response.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [USERS_QUERY_KEY] })
+    },
+  })
+}
+
+// Delete user
+export const useDeleteUser = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: async (userId: string): Promise<void> => {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: 'DELETE',
+      })
+      
+      if (!response.ok) {
+        const error = await response.text()
+        throw new Error(error || 'Failed to delete user')
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [USERS_QUERY_KEY] })
+    },
+  })
+}

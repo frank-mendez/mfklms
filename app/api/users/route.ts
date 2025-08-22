@@ -78,9 +78,9 @@ export async function GET(request: NextRequest) {
 // POST - Create new user
 export async function POST(req: Request) {
   try {
-    const isUserAdmin = await isAdmin();
-    if (!isUserAdmin) {
-      return new NextResponse("Unauthorized", { status: 403 });
+    const userIsSuperAdmin = await isSuperAdmin();
+    if (!userIsSuperAdmin) {
+      return new NextResponse("Forbidden", { status: 403 });
     }
 
     const body = await req.json();

@@ -1,16 +1,23 @@
 'use client'
 
 import { useState } from 'react'
-import { useUsers, useUpdateUserStatus, useUpdateUserRole } from '../../../react-query/users'
 import { UserStatus, UserRole, User } from '@prisma/client'
 import { useErrorModal } from '@/hooks/useErrorModal'
 import { ErrorModal } from '@/components/common'
+import { CreateEditUserModal, ViewUserModal, DeleteUserModal } from '@/components/users'
 import { PlusIcon, EyeIcon, EditIcon, DeleteIcon, ErrorIcon, LoadingSpinner, UsersIcon } from '@/assets/icons'
+import { useUpdateUserRole, useUpdateUserStatus, useUsers } from '@/react-query/users'
 
 export default function UsersPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [statusFilter, setStatusFilter] = useState<UserStatus | 'ALL'>('ALL')
   const [roleFilter, setRoleFilter] = useState<UserRole | 'ALL'>('ALL')
+  
+  // Modal state
+  const [isCreateEditModalOpen, setIsCreateEditModalOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [deletingUser, setDeletingUser] = useState<User | null>(null)
+  const [viewingUser, setViewingUser] = useState<User | null>(null)
   
   const { errorModal, showError, hideError } = useErrorModal()
   
@@ -22,6 +29,38 @@ export default function UsersPage() {
 
   const updateStatusMutation = useUpdateUserStatus()
   const updateRoleMutation = useUpdateUserRole()
+
+  // Modal handlers
+  const handleOpenCreateModal = () => {
+    setEditingUser(null)
+    setIsCreateEditModalOpen(true)
+  }
+
+  const handleOpenEditModal = (user: User) => {
+    setEditingUser(user)
+    setIsCreateEditModalOpen(true)
+  }
+
+  const handleCloseCreateEditModal = () => {
+    setIsCreateEditModalOpen(false)
+    setEditingUser(null)
+  }
+
+  const handleOpenViewModal = (user: User) => {
+    setViewingUser(user)
+  }
+
+  const handleCloseViewModal = () => {
+    setViewingUser(null)
+  }
+
+  const handleOpenDeleteModal = (user: User) => {
+    setDeletingUser(user)
+  }
+
+  const handleCloseDeleteModal = () => {
+    setDeletingUser(null)
+  }
 
   const handleStatusUpdate = async (userId: string, newStatus: UserStatus) => {
     try {
@@ -38,6 +77,7 @@ export default function UsersPage() {
       showError('Role Update Failed', error.message)
     }
   }
+
 
   const getStatusBadgeClass = (status: UserStatus) => {
     switch (status) {
@@ -83,8 +123,11 @@ export default function UsersPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">User Management</h1>
-        <button className="btn btn-primary">
-          <PlusIcon className="h-5 w-5 mr-2" />
+        <button
+          className="btn btn-primary"
+          onClick={handleOpenCreateModal}
+        >
+          <PlusIcon />
           Add User
         </button>
       </div>
@@ -183,25 +226,26 @@ export default function UsersPage() {
                   </td>
                   <td>{new Date(user.createdAt).toLocaleDateString()}</td>
                   <td className="space-x-2">
-                    <button className="btn btn-sm btn-info">
+                    <button 
+                      className="btn btn-sm btn-info"
+                      onClick={() => handleOpenViewModal(user)}
+                    >
                       <EyeIcon />
                       View
                     </button>
                     <button 
                       className="btn btn-sm btn-warning"
-                      onClick={() => handleRoleUpdate(user.id, user.role === 'USER' ? 'ADMIN' : 'USER')}
-                      disabled={updateRoleMutation.isPending}
+                      onClick={() => handleOpenEditModal(user)}
                     >
                       <EditIcon />
-                      {updateRoleMutation.isPending ? 'Updating...' : 'Edit Role'}
+                      Edit
                     </button>
                     <button 
                       className="btn btn-sm btn-error"
-                      onClick={() => handleStatusUpdate(user.id, user.status === 'ACTIVE' ? 'DEACTIVATED' : 'ACTIVE')}
-                      disabled={updateStatusMutation.isPending}
+                      onClick={() => handleOpenDeleteModal(user)}
                     >
                       <DeleteIcon />
-                      {user.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+                      Delete
                     </button>
                   </td>
                 </tr>
@@ -228,6 +272,28 @@ export default function UsersPage() {
         title={errorModal.title}
         message={errorModal.message}
       />
+
+      {/* Modals */}
+      <CreateEditUserModal
+        isOpen={isCreateEditModalOpen}
+        onClose={handleCloseCreateEditModal}
+        user={editingUser}
+      />
+
+      <ViewUserModal
+        isOpen={!!viewingUser}
+        onClose={handleCloseViewModal}
+        user={viewingUser}
+      />
+
+      <DeleteUserModal
+        isOpen={!!deletingUser}
+        onClose={handleCloseDeleteModal}
+        user={deletingUser}
+      />
+
+    
     </div>
   )
 }
+
