@@ -75,6 +75,7 @@ export interface ActivityTableProps {
   pagination?: PaginationData
   isLoading: boolean
   onPageChange: (page: number) => void
+  onLimitChange: (newLimit: number) => void
   onResetFilters: () => void
 }
 
@@ -85,4 +86,5 @@ export interface ActivityRowProps {
 export interface ActivityPaginationProps {
   pagination: PaginationData
   onPageChange: (page: number) => void
+  onLimitChange: (newLimit: number) => void
 }

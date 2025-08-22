@@ -11,7 +11,7 @@ import { ErrorIcon } from '@/assets/icons'
 export default function ActivitiesPage() {
   const { canAccessManagement } = useRoleAccess()
   const [currentPage, setCurrentPage] = useState(1)
-  const [limit] = useState(20)
+  const [limit, setLimit] = useState(10)
   const [searchTerm, setSearchTerm] = useState('')
   const [entityTypeFilter, setEntityTypeFilter] = useState<EntityType | 'ALL'>('ALL')
   const [actionTypeFilter, setActionTypeFilter] = useState<ActionType | 'ALL'>('ALL')
@@ -48,6 +48,11 @@ export default function ActivitiesPage() {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
+  }
+
+  const handleLimitChange = (newLimit: number) => {
+    setLimit(newLimit)
+    setCurrentPage(1) // Reset to first page when changing page size
   }
 
   const handleResetFilters = () => {
@@ -105,6 +110,7 @@ export default function ActivitiesPage() {
         pagination={pagination}
         isLoading={isLoading}
         onPageChange={handlePageChange}
+        onLimitChange={handleLimitChange}
         onResetFilters={handleResetFilters}
       />
 

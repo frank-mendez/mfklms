@@ -8,6 +8,7 @@ export default function ActivityTable({
   pagination, 
   isLoading, 
   onPageChange, 
+  onLimitChange,
   onResetFilters 
 }: ActivityTableProps) {
   return (
@@ -73,7 +74,8 @@ export default function ActivityTable({
           {pagination && (
             <ActivityPagination 
               pagination={pagination} 
-              onPageChange={onPageChange} 
+              onPageChange={onPageChange}
+              onLimitChange={onLimitChange}
             />
           )}
         </>
