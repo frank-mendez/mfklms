@@ -1,5 +1,7 @@
 import { db } from '@/lib/db';
 import { NextResponse } from 'next/server';
+import { getCurrentUser, isAdmin } from '@/lib/auth';
+import { logUpdate, logDelete } from '@/lib/activity-logger';
 
 // GET /api/stashes/[stashId] - Get a specific stash contribution
 export async function GET(
@@ -42,6 +44,12 @@ export async function PATCH(
   { params }: { params: { stashId: string } }
 ) {
   try {
+    const currentUser = await getCurrentUser();
+    const isUserAdmin = await isAdmin();
+    if (!isUserAdmin || !currentUser) {
+      return new NextResponse("Unauthorized", { status: 403 });
+    }
+
     const stashId = parseInt(params.stashId);
     const body = await request.json();
     const { ownerId, month, amount, remarks } = body;
@@ -65,6 +73,25 @@ export async function PATCH(
       );
     }
 
+    // Get the old stash data for logging
+    const oldStash = await db.stash.findUnique({
+      where: { id: stashId },
+      include: {
+        owner: {
+          select: {
+            name: true
+          }
+        }
+      }
+    });
+
+    if (!oldStash) {
+      return NextResponse.json(
+        { error: 'Stash contribution not found' },
+        { status: 404 }
+      );
+    }
+
     const stash = await db.stash.update({
       where: { id: stashId },
       data: {
@@ -82,6 +109,26 @@ export async function PATCH(
       }
     });
 
+    // Log the update
+    await logUpdate(
+      currentUser.id,
+      'STASH',
+      stash.id,
+      `Stash contribution for ${stash.owner.name}`,
+      {
+        ownerId: oldStash.ownerId,
+        month: oldStash.month,
+        amount: oldStash.amount,
+        remarks: oldStash.remarks
+      },
+      {
+        ownerId: stash.ownerId,
+        month: stash.month,
+        amount: stash.amount,
+        remarks: stash.remarks
+      }
+    );
+
     return NextResponse.json(stash);
   } catch (error) {
     console.error('Error updating stash:', error);
@@ -98,10 +145,50 @@ export async function DELETE(
   { params }: { params: { stashId: string } }
 ) {
   try {
+    const currentUser = await getCurrentUser();
+    const isUserAdmin = await isAdmin();
+    if (!isUserAdmin || !currentUser) {
+      return new NextResponse("Unauthorized", { status: 403 });
+    }
+
     const stashId = parseInt(params.stashId);
+    
+    // Get the stash data for logging before deletion
+    const stash = await db.stash.findUnique({
+      where: { id: stashId },
+      include: {
+        owner: {
+          select: {
+            name: true
+          }
+        }
+      }
+    });
+
+    if (!stash) {
+      return NextResponse.json(
+        { error: 'Stash contribution not found' },
+        { status: 404 }
+      );
+    }
+
     await db.stash.delete({
       where: { id: stashId }
     });
+
+    // Log the deletion
+    await logDelete(
+      currentUser.id,
+      'STASH',
+      stash.id,
+      `Stash contribution for ${stash.owner.name}`,
+      {
+        ownerId: stash.ownerId,
+        month: stash.month,
+        amount: stash.amount,
+        remarks: stash.remarks
+      }
+    );
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {

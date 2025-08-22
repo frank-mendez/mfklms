@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser, isAdmin } from "@/lib/auth";
+import { logCreate } from "@/lib/activity-logger";
 
 // Get all loans
 export async function GET() {
@@ -87,6 +88,21 @@ export async function POST(req: Request) {
         transactions: true,
       }
     });
+
+    // Log the loan creation
+    await logCreate(
+      currentUser.id,
+      'LOAN',
+      loan.id,
+      `Loan for ${loan.borrower.name}`,
+      {
+        borrowerId: loan.borrowerId,
+        principal: loan.principal,
+        interestRate: loan.interestRate,
+        startDate: loan.startDate,
+        maturityDate: loan.maturityDate
+      }
+    );
 
     return NextResponse.json(loan);
   } catch (error) {

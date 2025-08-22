@@ -1,5 +1,7 @@
 import { db } from '@/lib/db';
 import { NextResponse } from 'next/server';
+import { getCurrentUser } from '@/lib/auth';
+import { logCreate } from '@/lib/activity-logger';
 
 // GET /api/owners - List all owners
 export async function GET() {
@@ -22,6 +24,11 @@ export async function GET() {
 // POST /api/owners - Create a new owner
 export async function POST(request: Request) {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
     const body = await request.json();
     const { name, contactInfo } = body;
 
@@ -38,6 +45,15 @@ export async function POST(request: Request) {
         contactInfo
       }
     });
+
+    // Log the owner creation
+    await logCreate(
+      currentUser.id,
+      'OTHER',
+      owner.id,
+      owner.name,
+      { name: owner.name, contactInfo: owner.contactInfo }
+    );
 
     return NextResponse.json(owner, { status: 201 });
   } catch (error) {

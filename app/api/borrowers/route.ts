@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser, isAdmin } from "@/lib/auth";
+import { logCreate } from "@/lib/activity-logger";
 
 // Get all borrowers
 export async function GET() {
@@ -52,6 +53,15 @@ export async function POST(req: Request) {
         contactInfo,
       }
     });
+
+    // Log the creation activity
+    await logCreate(
+      currentUser.id,
+      'USER', // Note: USER is used since Prisma schema shows only USER, LOAN, REPAYMENT, STASH, OTHER
+      borrower.id,
+      borrower.name,
+      { name: borrower.name, contactInfo: borrower.contactInfo }
+    );
 
     return NextResponse.json(borrower);
   } catch (error) {

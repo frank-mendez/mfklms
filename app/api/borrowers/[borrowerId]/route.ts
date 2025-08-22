@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser, isAdmin } from "@/lib/auth";
+import { logUpdate, logDelete } from "@/lib/activity-logger";
 
 // Get specific borrower
 export async function GET(
@@ -68,6 +69,16 @@ export async function PATCH(
     }
 
     const { borrowerId } = await params;
+    
+    // Get current borrower data for logging
+    const currentBorrower = await db.borrower.findUnique({
+      where: { id: parseInt(borrowerId) }
+    });
+
+    if (!currentBorrower) {
+      return new NextResponse("Borrower not found", { status: 404 });
+    }
+
     const borrower = await db.borrower.update({
       where: {
         id: parseInt(borrowerId)
@@ -77,6 +88,16 @@ export async function PATCH(
         contactInfo,
       }
     });
+
+    // Log the update activity
+    await logUpdate(
+      currentUser.id,
+      'OTHER', // Using OTHER since borrower doesn't have specific entity type
+      borrower.id,
+      borrower.name,
+      { name: currentBorrower.name, contactInfo: currentBorrower.contactInfo },
+      { name: borrower.name, contactInfo: borrower.contactInfo }
+    );
 
     return NextResponse.json(borrower);
   } catch (error) {
@@ -90,8 +111,9 @@ export async function DELETE(
   { params }: { params: Promise<{ borrowerId: string }> }
 ) {
   try {
+    const currentUser = await getCurrentUser();
     const isUserAdmin = await isAdmin();
-    if (!isUserAdmin) {
+    if (!isUserAdmin || !currentUser) {
       return new NextResponse("Unauthorized", { status: 403 });
     }
 
@@ -120,6 +142,15 @@ export async function DELETE(
         { status: 400 }
       );
     }
+
+    // Log the deletion before deleting
+    await logDelete(
+      currentUser.id,
+      'OTHER',
+      borrower.id,
+      borrower.name,
+      { name: borrower.name, contactInfo: borrower.contactInfo }
+    );
 
     await db.borrower.delete({
       where: {

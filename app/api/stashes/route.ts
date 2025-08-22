@@ -1,5 +1,7 @@
 import { db } from '@/lib/db';
 import { NextResponse } from 'next/server';
+import { getCurrentUser } from '@/lib/auth';
+import { logCreate } from '@/lib/activity-logger';
 
 // GET /api/stashes - List all stash contributions
 export async function GET() {
@@ -29,6 +31,11 @@ export async function GET() {
 // POST /api/stashes - Create a new stash contribution
 export async function POST(request: Request) {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
     const body = await request.json();
     const { ownerId, month, amount, remarks } = body;
 
@@ -66,6 +73,20 @@ export async function POST(request: Request) {
         }
       }
     });
+
+    // Log the stash creation
+    await logCreate(
+      currentUser.id,
+      'STASH',
+      stash.id,
+      `Stash contribution by ${stash.owner.name}`,
+      {
+        ownerId: stash.ownerId,
+        month: stash.month,
+        amount: stash.amount,
+        remarks: stash.remarks
+      }
+    );
 
     return NextResponse.json(stash, { status: 201 });
   } catch (error) {

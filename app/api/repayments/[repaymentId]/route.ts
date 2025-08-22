@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser, isAdmin } from "@/lib/auth";
+import { logUpdate, logDelete } from "@/lib/activity-logger";
 
 // Get specific repayment
 export async function GET(
@@ -106,6 +107,28 @@ export async function PATCH(
       }
     });
 
+    // Log the update
+    await logUpdate(
+      currentUser.id,
+      'REPAYMENT',
+      updatedRepayment.id,
+      `Repayment for ${updatedRepayment.loan.borrower.name}`,
+      {
+        amountDue: existingRepayment.amountDue,
+        amountPaid: existingRepayment.amountPaid,
+        dueDate: existingRepayment.dueDate,
+        paymentDate: existingRepayment.paymentDate,
+        status: existingRepayment.status
+      },
+      {
+        amountDue: updatedRepayment.amountDue,
+        amountPaid: updatedRepayment.amountPaid,
+        dueDate: updatedRepayment.dueDate,
+        paymentDate: updatedRepayment.paymentDate,
+        status: updatedRepayment.status
+      }
+    );
+
     return NextResponse.json(updatedRepayment);
   } catch (error) {
     console.error('Error updating repayment:', error);
@@ -119,15 +142,26 @@ export async function DELETE(
   { params }: { params: Promise<{ repaymentId: string }> }
 ) {
   try {
+    const currentUser = await getCurrentUser();
     const isUserAdmin = await isAdmin();
-    if (!isUserAdmin) {
+    if (!isUserAdmin || !currentUser) {
       return new NextResponse("Unauthorized", { status: 403 });
     }
 
     const { repaymentId } = await params;
     const repayment = await db.repayment.findUnique({
       where: { id: parseInt(repaymentId) },
-      include: { loan: true }
+      include: { 
+        loan: {
+          include: {
+            borrower: {
+              select: {
+                name: true
+              }
+            }
+          }
+        }
+      }
     });
 
     if (!repayment) {
@@ -143,6 +177,21 @@ export async function DELETE(
         id: parseInt(repaymentId)
       }
     });
+
+    // Log the deletion
+    await logDelete(
+      currentUser.id,
+      'REPAYMENT',
+      repayment.id,
+      `Repayment for ${repayment.loan.borrower.name}`,
+      {
+        amountDue: repayment.amountDue,
+        amountPaid: repayment.amountPaid,
+        dueDate: repayment.dueDate,
+        paymentDate: repayment.paymentDate,
+        status: repayment.status
+      }
+    );
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {

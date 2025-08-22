@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser, isAdmin } from "@/lib/auth";
+import { logCreate } from "@/lib/activity-logger";
 
 // Get all transactions
 export async function GET() {
@@ -101,6 +102,20 @@ export async function POST(req: Request) {
         }
       }
     });
+
+    // Log the transaction creation
+    await logCreate(
+      currentUser.id,
+      'OTHER',
+      transaction.id,
+      `Transaction for ${transaction.loan.borrower.name}`,
+      {
+        loanId: transaction.loanId,
+        transactionType: transaction.transactionType,
+        amount: transaction.amount,
+        date: transaction.date
+      }
+    );
 
     return NextResponse.json(transaction);
   } catch (error) {

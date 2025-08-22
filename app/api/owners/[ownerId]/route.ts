@@ -1,5 +1,7 @@
 import { db } from '@/lib/db';
 import { NextResponse } from 'next/server';
+import { getCurrentUser, isAdmin } from '@/lib/auth';
+import { logUpdate, logDelete } from '@/lib/activity-logger';
 
 // GET /api/owners/[ownerId] - Get a specific owner
 export async function GET(
@@ -35,6 +37,12 @@ export async function PATCH(
   { params }: { params: { ownerId: string } }
 ) {
   try {
+    const currentUser = await getCurrentUser();
+    const isUserAdmin = await isAdmin();
+    if (!isUserAdmin || !currentUser) {
+      return new NextResponse("Unauthorized", { status: 403 });
+    }
+
     const ownerId = parseInt(params.ownerId);
     const body = await request.json();
     const { name, contactInfo } = body;
@@ -46,6 +54,18 @@ export async function PATCH(
       );
     }
 
+    // Get the old owner data for logging
+    const oldOwner = await db.owner.findUnique({
+      where: { id: ownerId }
+    });
+
+    if (!oldOwner) {
+      return NextResponse.json(
+        { error: 'Owner not found' },
+        { status: 404 }
+      );
+    }
+
     const owner = await db.owner.update({
       where: { id: ownerId },
       data: {
@@ -53,6 +73,22 @@ export async function PATCH(
         contactInfo
       }
     });
+
+    // Log the update
+    await logUpdate(
+      currentUser.id,
+      'OTHER',
+      owner.id,
+      `Owner ${owner.name}`,
+      {
+        name: oldOwner.name,
+        contactInfo: oldOwner.contactInfo
+      },
+      {
+        name: owner.name,
+        contactInfo: owner.contactInfo
+      }
+    );
 
     return NextResponse.json(owner);
   } catch (error) {
@@ -70,10 +106,41 @@ export async function DELETE(
   { params }: { params: { ownerId: string } }
 ) {
   try {
+    const currentUser = await getCurrentUser();
+    const isUserAdmin = await isAdmin();
+    if (!isUserAdmin || !currentUser) {
+      return new NextResponse("Unauthorized", { status: 403 });
+    }
+
     const ownerId = parseInt(params.ownerId);
+    
+    // Get the owner data for logging before deletion
+    const owner = await db.owner.findUnique({
+      where: { id: ownerId }
+    });
+
+    if (!owner) {
+      return NextResponse.json(
+        { error: 'Owner not found' },
+        { status: 404 }
+      );
+    }
+
     await db.owner.delete({
       where: { id: ownerId }
     });
+
+    // Log the deletion
+    await logDelete(
+      currentUser.id,
+      'OTHER',
+      owner.id,
+      `Owner ${owner.name}`,
+      {
+        name: owner.name,
+        contactInfo: owner.contactInfo
+      }
+    );
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {

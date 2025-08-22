@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser, isAdmin, isSuperAdmin } from "@/lib/auth";
 import { hash } from "bcryptjs";
 import { UserStatus, UserRole } from '@prisma/client';
+import { logCreate } from "@/lib/activity-logger";
 
 // GET all users with pagination and filters
 export async function GET(request: NextRequest) {
@@ -78,8 +79,9 @@ export async function GET(request: NextRequest) {
 // POST - Create new user
 export async function POST(req: Request) {
   try {
+    const currentUser = await getCurrentUser();
     const userIsSuperAdmin = await isSuperAdmin();
-    if (!userIsSuperAdmin) {
+    if (!userIsSuperAdmin || !currentUser) {
       return new NextResponse("Forbidden", { status: 403 });
     }
 
@@ -112,6 +114,21 @@ export async function POST(req: Request) {
         createdAt: true,
       }
     });
+
+    // Log the user creation (exclude password)
+    await logCreate(
+      currentUser.id,
+      'USER',
+      Math.abs(user.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0)), // Convert string ID to number
+      `User ${user.firstName} ${user.lastName}`,
+      {
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        status: user.status
+      }
+    );
 
     return NextResponse.json(user);
   } catch (error) {

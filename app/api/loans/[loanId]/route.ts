@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser, isAdmin } from "@/lib/auth";
+import { logUpdate, logDelete } from "@/lib/activity-logger";
 
 // Get specific loan
 export async function GET(
@@ -117,6 +118,16 @@ export async function PATCH(
       }
     });
 
+    // Log the loan update
+    await logUpdate(
+      currentUser.id,
+      'LOAN',
+      loan.id,
+      `Loan for ${loan.borrower.name}`,
+      existingLoan,
+      updateData
+    );
+
     return NextResponse.json(loan);
   } catch (error) {
     console.error('Error updating loan:', error);
@@ -130,8 +141,9 @@ export async function DELETE(
   { params }: { params: Promise<{ loanId: string }> }
 ) {
   try {
+    const currentUser = await getCurrentUser();
     const isUserAdmin = await isAdmin();
-    if (!isUserAdmin) {
+    if (!isUserAdmin || !currentUser) {
       return new NextResponse("Unauthorized", { status: 403 });
     }
 
@@ -143,6 +155,11 @@ export async function DELETE(
       include: {
         repayments: true,
         transactions: true,
+        borrower: {
+          select: {
+            name: true,
+          }
+        }
       }
     });
 
@@ -154,6 +171,20 @@ export async function DELETE(
     if (loan.status === 'ACTIVE') {
       return new NextResponse("Cannot delete active loan", { status: 400 });
     }
+
+    // Log the deletion before deleting
+    await logDelete(
+      currentUser.id,
+      'LOAN',
+      loan.id,
+      `Loan for ${loan.borrower.name}`,
+      {
+        borrowerId: loan.borrowerId,
+        principal: loan.principal,
+        interestRate: loan.interestRate,
+        status: loan.status
+      }
+    );
 
     // Delete related records first (using cascade in schema)
     await db.loan.delete({

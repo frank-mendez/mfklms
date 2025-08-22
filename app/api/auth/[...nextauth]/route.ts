@@ -3,6 +3,7 @@ import NextAuth, { NextAuthOptions } from "next-auth";
 import { db } from "@/lib/db";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
+import { logLogin } from "@/lib/activity-logger";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(db) as any,
@@ -41,6 +42,9 @@ export const authOptions: NextAuthOptions = {
         if (!isPasswordValid) {
           throw new Error("Invalid credentials");
         }
+
+        // Log successful login
+        await logLogin(user.id, user.email);
 
         return {
           id: user.id,

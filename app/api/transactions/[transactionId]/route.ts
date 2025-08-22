@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser, isAdmin } from "@/lib/auth";
+import { logUpdate, logDelete } from "@/lib/activity-logger";
 
 // Get specific transaction
 export async function GET(
@@ -51,8 +52,9 @@ export async function PATCH(
   { params }: { params: { transactionId: string } }
 ) {
   try {
+    const currentUser = await getCurrentUser();
     const isUserAdmin = await isAdmin();
-    if (!isUserAdmin) {
+    if (!isUserAdmin || !currentUser) {
       return new NextResponse("Unauthorized", { status: 403 });
     }
 
@@ -61,7 +63,17 @@ export async function PATCH(
 
     const transaction = await db.transaction.findUnique({
       where: { id: parseInt(params.transactionId) },
-      include: { loan: true }
+      include: { 
+        loan: {
+          include: {
+            borrower: {
+              select: {
+                name: true
+              }
+            }
+          }
+        }
+      }
     });
 
     if (!transaction) {
@@ -85,8 +97,37 @@ export async function PATCH(
       data: {
         amount: amount !== undefined ? amount : undefined,
         date: date ? new Date(date) : undefined,
+      },
+      include: {
+        loan: {
+          include: {
+            borrower: {
+              select: {
+                name: true
+              }
+            }
+          }
+        }
       }
     });
+
+    // Log the update
+    await logUpdate(
+      currentUser.id,
+      'OTHER',
+      updatedTransaction.id,
+      `Transaction for ${updatedTransaction.loan.borrower.name}`,
+      {
+        amount: transaction.amount,
+        date: transaction.date,
+        transactionType: transaction.transactionType
+      },
+      {
+        amount: updatedTransaction.amount,
+        date: updatedTransaction.date,
+        transactionType: updatedTransaction.transactionType
+      }
+    );
 
     return NextResponse.json(updatedTransaction);
   } catch (error) {
@@ -100,14 +141,25 @@ export async function DELETE(
   { params }: { params: { transactionId: string } }
 ) {
   try {
+    const currentUser = await getCurrentUser();
     const isUserAdmin = await isAdmin();
-    if (!isUserAdmin) {
+    if (!isUserAdmin || !currentUser) {
       return new NextResponse("Unauthorized", { status: 403 });
     }
 
     const transaction = await db.transaction.findUnique({
       where: { id: parseInt(params.transactionId) },
-      include: { loan: true }
+      include: { 
+        loan: {
+          include: {
+            borrower: {
+              select: {
+                name: true
+              }
+            }
+          }
+        }
+      }
     });
 
     if (!transaction) {
@@ -129,6 +181,19 @@ export async function DELETE(
         id: parseInt(params.transactionId)
       }
     });
+
+    // Log the deletion
+    await logDelete(
+      currentUser.id,
+      'OTHER',
+      transaction.id,
+      `Transaction for ${transaction.loan.borrower.name}`,
+      {
+        amount: transaction.amount,
+        date: transaction.date,
+        transactionType: transaction.transactionType
+      }
+    );
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
