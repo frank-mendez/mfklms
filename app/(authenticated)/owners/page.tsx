@@ -5,8 +5,10 @@ import { useOwners } from '@/react-query/owners';
 import { Owner } from '@/types/owner';
 import { CreateEditOwnerModal, ViewOwnerModal, DeleteOwnerModal } from '@/components/owners';
 import { PlusIcon, EyeIcon, EditIcon, DeleteIcon, ErrorIcon, LoadingSpinner, UsersIcon } from '@/assets/icons';
+import { useRoleAccess } from '@/hooks';
 
 export default function OwnersPage() {
+  const { canAccessStash } = useRoleAccess();
   const { data: owners, isLoading, error } = useOwners();
   
   // Modal state
@@ -14,6 +16,18 @@ export default function OwnersPage() {
   const [editingOwner, setEditingOwner] = useState<Owner | null>(null);
   const [deletingOwner, setDeletingOwner] = useState<Owner | null>(null);
   const [viewingOwner, setViewingOwner] = useState<Owner | null>(null);
+
+  // Check if user has access to this page
+  if (!canAccessStash()) {
+    return (
+      <div className="alert alert-error">
+        <div>
+          <h3 className="font-bold">Access Denied</h3>
+          <div className="text-xs">You don't have permission to access stash management. Only admins and super admins can access this section.</div>
+        </div>
+      </div>
+    )
+  }
 
   const handleOpenCreateModal = () => {
     setEditingOwner(null);

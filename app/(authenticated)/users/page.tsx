@@ -2,13 +2,14 @@
 
 import { useState } from 'react'
 import { UserStatus, UserRole, User } from '@prisma/client'
-import { useErrorModal } from '@/hooks/useErrorModal'
+import { useErrorModal, useRoleAccess } from '@/hooks'
 import { ErrorModal } from '@/components/common'
 import { CreateEditUserModal, ViewUserModal, DeleteUserModal } from '@/components/users'
 import { PlusIcon, EyeIcon, EditIcon, DeleteIcon, ErrorIcon, LoadingSpinner, UsersIcon } from '@/assets/icons'
 import { useUpdateUserRole, useUpdateUserStatus, useUsers } from '@/react-query/users'
 
 export default function UsersPage() {
+  const { canAccessManagement } = useRoleAccess()
   const [currentPage, setCurrentPage] = useState(1)
   const [statusFilter, setStatusFilter] = useState<UserStatus | 'ALL'>('ALL')
   const [roleFilter, setRoleFilter] = useState<UserRole | 'ALL'>('ALL')
@@ -29,6 +30,18 @@ export default function UsersPage() {
 
   const updateStatusMutation = useUpdateUserStatus()
   const updateRoleMutation = useUpdateUserRole()
+
+  // Check if user has access to this page
+  if (!canAccessManagement()) {
+    return (
+      <div className="alert alert-error">
+        <div>
+          <h3 className="font-bold">Access Denied</h3>
+          <div className="text-xs">You don't have permission to access user management. Only super admins can manage users.</div>
+        </div>
+      </div>
+    )
+  }
 
   // Modal handlers
   const handleOpenCreateModal = () => {
