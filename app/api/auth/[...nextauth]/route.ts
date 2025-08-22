@@ -55,7 +55,8 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
+      // On initial login or when user object is available
       if (user) {
         return {
           ...token,
@@ -63,6 +64,24 @@ export const authOptions: NextAuthOptions = {
           role: user.role,
         };
       }
+      
+      // On subsequent requests or token refresh, ensure we have fresh user data
+      if (token.id && (!token.role || trigger === 'update')) {
+        try {
+          const dbUser = await db.user.findUnique({
+            where: { id: token.id as string },
+            select: { id: true, role: true, status: true }
+          });
+          
+          if (dbUser) {
+            token.role = dbUser.role;
+            token.status = dbUser.status;
+          }
+        } catch (error) {
+          console.error('Error fetching user data for token:', error);
+        }
+      }
+      
       return token;
     },
     async session({ session, token }) {
@@ -70,7 +89,7 @@ export const authOptions: NextAuthOptions = {
         ...session,
         user: {
           ...session.user,
-          id: token.id,
+          id: token.id as string,
           role: token.role,
         }
       };

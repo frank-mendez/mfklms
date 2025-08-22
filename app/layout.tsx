@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import "./globals.css";
 import SessionProvider from "@/components/SessionProvider";
 import QueryProvider from "@/components/QueryProvider";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 
 export const metadata: Metadata = {
@@ -18,7 +19,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   return (
     <html lang="en" className={inter.className}>
       <body suppressHydrationWarning>
