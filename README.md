@@ -38,14 +38,47 @@ NEXTAUTH_URL="http://localhost:3000"
 3. Initialize the database:
 
 ```bash
-npx prisma generate
-npx prisma db push
+# Generate Prisma client
+npm run db:generate
+
+# Push database schema
+npm run db:push
+
+# Seed the database with initial data
+npm run db:seed
+
+# Or run all database setup steps at once
+npm run db:setup
 ```
+
+## Available Scripts
+
+### Development
+
+- `npm run dev` - Start development server with Turbopack
+- `npm run build` - Build the application for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+
+### Database Management
+
+- `npm run db:generate` - Generate Prisma client
+- `npm run db:push` - Push schema changes to database
+- `npm run db:seed` - Run database seeder
+- `npm run db:studio` - Open Prisma Studio (database GUI)
+- `npm run db:reset` - Reset database and run migrations
+- `npm run db:setup` - Complete database setup (generate + push + seed)
+- `npm run db:deploy` - Deploy migrations (production)
+
+### Production Deployment
+
+- `npm run build:production` - Production build with database setup
+- `npm run deploy` - Full deployment pipeline
 
 4. Seed the admin user:
 
 ```bash
-npm run seed
+npm run db:seed
 ```
 
 5. Start the development server:
@@ -62,6 +95,65 @@ Visit [http://localhost:3000](http://localhost:3000) to see the application.
 - Password: admin123
 
 **Important**: Change these credentials before deploying to production!
+
+## Deployment
+
+### Vercel Deployment
+
+This project is configured for automatic deployment to Vercel with database migration and seeding.
+
+1. **Connect your repository to Vercel:**
+
+   - Go to [vercel.com](https://vercel.com)
+   - Import your GitHub repository
+   - Vercel will automatically detect the Next.js framework
+
+2. **Set up environment variables in Vercel:**
+
+   ```env
+   DATABASE_URL="your-production-database-url"
+   NEXTAUTH_SECRET="your-production-secret"
+   NEXTAUTH_URL="https://your-app.vercel.app"
+   ```
+
+3. **Deploy:**
+   - Push to your main branch
+   - Vercel will automatically:
+     - Install dependencies
+     - Generate Prisma client
+     - Run database migrations
+     - Seed the database
+     - Build and deploy the application
+
+The `vercel.json` configuration ensures that:
+
+- Database migrations run during build
+- Initial data is seeded automatically
+- API routes have appropriate timeout settings
+- Prisma is properly configured for serverless
+
+### Manual Database Operations on Vercel
+
+If you need to run database operations manually after deployment:
+
+```bash
+# Reset and reseed database (be careful in production!)
+npm run db:reset
+
+# Just run seeding
+npm run db:seed
+
+# Run migrations only
+npm run db:deploy
+```
+
+### Production Environment Variables
+
+Make sure to set these in your Vercel dashboard:
+
+- `DATABASE_URL` - Your production PostgreSQL connection string
+- `NEXTAUTH_SECRET` - A secure random string for JWT signing
+- `NEXTAUTH_URL` - Your deployed application URL
 
 ## API Routes
 
