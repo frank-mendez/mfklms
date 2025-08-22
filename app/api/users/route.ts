@@ -80,8 +80,10 @@ export async function GET(request: NextRequest) {
 export async function POST(req: Request) {
   try {
     const currentUser = await getCurrentUser();
+    console.log('currentUser.id', currentUser?.id);
     const userIsSuperAdmin = await isSuperAdmin();
-    if (!userIsSuperAdmin || !currentUser) {
+    
+    if (!userIsSuperAdmin || !currentUser || !currentUser.id) {
       return new NextResponse("Forbidden", { status: 403 });
     }
 
@@ -116,7 +118,7 @@ export async function POST(req: Request) {
     });
 
     // Log the user creation (exclude password)
-    await logCreate(
+    const logCreated = await logCreate(
       currentUser.id,
       'USER',
       Math.abs(user.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0)), // Convert string ID to number
@@ -129,6 +131,8 @@ export async function POST(req: Request) {
         status: user.status
       }
     );
+
+    console.log('User created and logged:', logCreated);
 
     return NextResponse.json(user);
   } catch (error) {

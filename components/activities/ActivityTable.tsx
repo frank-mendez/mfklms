@@ -32,11 +32,11 @@ export default function ActivityTable({
       ) : (
         <>
           {/* Header */}
-          <div className="px-6 py-4 border-b border-gray-200 bg-base-100">
+          <div className="px-6 py-4 border-gray-200 bg-base-100">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <UsersIcon className="h-5 w-5 text-gray-500" />
-                <span className="font-medium text-gray-900">
+                <span className="font-medium">
                   {pagination ? (
                     <>
                       {((pagination.page - 1) * pagination.limit) + 1}-

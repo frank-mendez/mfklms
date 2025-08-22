@@ -14,15 +14,34 @@ interface CreateActivityLogOptions {
 
 export async function createActivityLog(options: CreateActivityLogOptions) {
   try {
+    // Validate userId is provided
+    if (!options.userId) {
+      console.error('Cannot create activity log: userId is required but was not provided')
+      return null
+    }
+
     const headersList = await headers()
     const ipAddress = headersList.get('x-forwarded-for') || 
                      headersList.get('x-real-ip') || 
                      headersList.get('x-client-ip') || 
                      'Unknown'
 
+    // Verify user exists before creating activity log
+    const userExists = await db.user.findUnique({
+      where: { id: options.userId },
+      select: { id: true }
+    })
+
+    if (!userExists) {
+      console.error(`Cannot create activity log: User ${options.userId} not found`)
+      return null
+    }
+
     const activity = await db.activity.create({
       data: {
-        userId: options.userId,
+        user: {
+          connect: { id: options.userId }
+        },
         entityType: options.entityType,
         entityId: options.entityId,
         actionType: options.actionType,
@@ -50,6 +69,11 @@ export async function logCreate(
   entityName: string,
   newValue: any
 ) {
+  if (!userId) {
+    console.error('Cannot log CREATE activity: userId is required')
+    return null
+  }
+  
   return createActivityLog({
     userId,
     entityType,
