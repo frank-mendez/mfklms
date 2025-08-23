@@ -1,6 +1,6 @@
 'use client';
 import { Borrower } from '@/types/borrower';
-import { CloseIcon, CreateIcon, EditIcon, MoneyIcon, LightningIcon, CheckCircleIcon } from '@/assets/icons';
+import { CloseIcon, CreateIcon, EditIcon, LightningIcon, CheckCircleIcon } from '@/assets/icons';
 
 interface ViewBorrowerModalProps {
   borrower: Borrower | null;

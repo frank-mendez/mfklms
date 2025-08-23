@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { NextResponse } from 'next/server';
-import { getCurrentUser, checkAdminOrSuperAdminAuth } from '@/lib/auth';
+import { checkAdminOrSuperAdminAuth } from '@/lib/auth';
 import { logUpdate, logDelete } from '@/lib/activity-logger';
 
 // GET /api/owners/[ownerId] - Get a specific owner
