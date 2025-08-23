@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { NextResponse } from 'next/server';
-import { getCurrentUser, isAdmin } from '@/lib/auth';
+import { getCurrentUser, isAdmin, isSuperAdmin } from '@/lib/auth';
 import { logUpdate, logDelete } from '@/lib/activity-logger';
 
 // GET /api/stashes/[stashId] - Get a specific stash contribution
@@ -47,7 +47,8 @@ export async function PATCH(
   try {
     const currentUser = await getCurrentUser();
     const isUserAdmin = await isAdmin();
-    if (!isUserAdmin || !currentUser) {
+    const isUserSuperAdmin = await isSuperAdmin();
+    if (!currentUser || (!isUserAdmin && !isUserSuperAdmin)) {
       return new NextResponse("Unauthorized", { status: 403 });
     }
 
@@ -149,7 +150,7 @@ export async function DELETE(
   try {
     const currentUser = await getCurrentUser();
     const isUserAdmin = await isAdmin();
-    if (!isUserAdmin || !currentUser) {
+    if (!currentUser || !isUserAdmin) {
       return new NextResponse("Unauthorized", { status: 403 });
     }
 
