@@ -107,7 +107,6 @@ export default function ViewBorrowerModal({ borrower, onClose, onEdit }: ViewBor
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="stat bg-base-100 rounded-lg">
                   <div className="stat-figure text-primary">
-                    <MoneyIcon />
                   </div>
                   <div className="stat-title">Active Loans</div>
                   <div className="stat-value text-primary">0</div>
@@ -118,7 +117,7 @@ export default function ViewBorrowerModal({ borrower, onClose, onEdit }: ViewBor
                     <LightningIcon />
                   </div>
                   <div className="stat-title">Total Borrowed</div>
-                  <div className="stat-value text-secondary">$0</div>
+                  <div className="stat-value text-secondary">0</div>
                   <div className="stat-desc">Lifetime amount</div>
                 </div>
                 <div className="stat bg-base-100 rounded-lg">

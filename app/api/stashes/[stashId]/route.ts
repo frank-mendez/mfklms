@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { NextResponse } from 'next/server';
-import { getCurrentUser, isAdmin, isSuperAdmin } from '@/lib/auth';
+import { checkAdminOrSuperAdminAuth } from '@/lib/auth';
 import { logUpdate, logDelete } from '@/lib/activity-logger';
 
 // GET /api/stashes/[stashId] - Get a specific stash contribution
@@ -45,12 +45,11 @@ export async function PATCH(
   { params }: { params: Promise<{ stashId: string }> }
 ) {
   try {
-    const currentUser = await getCurrentUser();
-    const isUserAdmin = await isAdmin();
-    const isUserSuperAdmin = await isSuperAdmin();
-    if (!currentUser || (!isUserAdmin && !isUserSuperAdmin)) {
-      return new NextResponse("Unauthorized", { status: 403 });
+    const authCheck = await checkAdminOrSuperAdminAuth();
+    if (!authCheck.authorized) {
+      return authCheck.response;
     }
+    const currentUser = authCheck.user;
 
     const { stashId } = await params;
     const stashIdNum = parseInt(stashId);
@@ -148,11 +147,11 @@ export async function DELETE(
   { params }: { params: Promise<{ stashId: string }> }
 ) {
   try {
-    const currentUser = await getCurrentUser();
-    const isUserAdmin = await isAdmin();
-    if (!currentUser || !isUserAdmin) {
-      return new NextResponse("Unauthorized", { status: 403 });
+    const authCheck = await checkAdminOrSuperAdminAuth();
+    if (!authCheck.authorized) {
+      return authCheck.response;
     }
+    const currentUser = authCheck.user;
 
     const { stashId } = await params;
     const stashIdNum = parseInt(stashId);

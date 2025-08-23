@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser, isAdmin } from "@/lib/auth";
+import { checkAuth, checkAdminOrSuperAdminAuth } from "@/lib/auth";
 import { logUpdate, logDelete } from "@/lib/activity-logger";
 
 // Get specific borrower
@@ -9,9 +9,9 @@ export async function GET(
   { params }: { params: Promise<{ borrowerId: string }> }
 ) {
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) {
-      return new NextResponse("Unauthorized", { status: 401 });
+    const authCheck = await checkAuth();
+    if (!authCheck.authorized) {
+      return authCheck.response;
     }
 
     const { borrowerId } = await params;
@@ -56,10 +56,11 @@ export async function PATCH(
   { params }: { params: Promise<{ borrowerId: string }> }
 ) {
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) {
-      return new NextResponse("Unauthorized", { status: 401 });
+    const authCheck = await checkAdminOrSuperAdminAuth();
+    if (!authCheck.authorized) {
+      return authCheck.response;
     }
+    const currentUser = authCheck.user;
 
     const body = await req.json();
     const { name, contactInfo } = body;
@@ -111,11 +112,11 @@ export async function DELETE(
   { params }: { params: Promise<{ borrowerId: string }> }
 ) {
   try {
-    const currentUser = await getCurrentUser();
-    const isUserAdmin = await isAdmin();
-    if (!isUserAdmin || !currentUser) {
-      return new NextResponse("Unauthorized", { status: 403 });
+    const authCheck = await checkAdminOrSuperAdminAuth();
+    if (!authCheck.authorized) {
+      return authCheck.response;
     }
+    const currentUser = authCheck.user;
 
     const { borrowerId } = await params;
     // Check if borrower has any active loans

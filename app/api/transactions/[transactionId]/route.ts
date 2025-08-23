@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser, isAdmin } from "@/lib/auth";
+import { getCurrentUser, checkAdminOrSuperAdminAuth } from "@/lib/auth";
 import { logUpdate, logDelete } from "@/lib/activity-logger";
 
 // Get specific transaction
@@ -53,11 +53,11 @@ export async function PATCH(
   { params }: { params: Promise<{ transactionId: string }> }
 ) {
   try {
-    const currentUser = await getCurrentUser();
-    const isUserAdmin = await isAdmin();
-    if (!isUserAdmin || !currentUser) {
-      return new NextResponse("Unauthorized", { status: 403 });
+    const authCheck = await checkAdminOrSuperAdminAuth();
+    if (!authCheck.authorized) {
+      return authCheck.response;
     }
+    const currentUser = authCheck.user;
 
     const { transactionId } = await params;
 
@@ -144,11 +144,11 @@ export async function DELETE(
   { params }: { params: Promise<{ transactionId: string }> }
 ) {
   try {
-    const currentUser = await getCurrentUser();
-    const isUserAdmin = await isAdmin();
-    if (!isUserAdmin || !currentUser) {
-      return new NextResponse("Unauthorized", { status: 403 });
+    const authCheck = await checkAdminOrSuperAdminAuth();
+    if (!authCheck.authorized) {
+      return authCheck.response;
     }
+    const currentUser = authCheck.user;
 
     const { transactionId } = await params;
     const transaction = await db.transaction.findUnique({

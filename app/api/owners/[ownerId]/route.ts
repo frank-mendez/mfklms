@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { NextResponse } from 'next/server';
-import { getCurrentUser, isAdmin } from '@/lib/auth';
+import { getCurrentUser, checkAdminOrSuperAdminAuth } from '@/lib/auth';
 import { logUpdate, logDelete } from '@/lib/activity-logger';
 
 // GET /api/owners/[ownerId] - Get a specific owner
@@ -38,11 +38,11 @@ export async function PATCH(
   { params }: { params: Promise<{ ownerId: string }> }
 ) {
   try {
-    const currentUser = await getCurrentUser();
-    const isUserAdmin = await isAdmin();
-    if (!isUserAdmin || !currentUser) {
-      return new NextResponse("Unauthorized", { status: 403 });
-    }
+     const authCheck = await checkAdminOrSuperAdminAuth();
+      if (!authCheck.authorized) {
+        return authCheck.response;
+      }
+      const currentUser = authCheck.user;
 
     const { ownerId } = await params;
     const ownerIdNum = parseInt(ownerId);
@@ -108,11 +108,11 @@ export async function DELETE(
   { params }: { params: Promise<{ ownerId: string }> }
 ) {
   try {
-    const currentUser = await getCurrentUser();
-    const isUserAdmin = await isAdmin();
-    if (!isUserAdmin || !currentUser) {
-      return new NextResponse("Unauthorized", { status: 403 });
+    const authCheck = await checkAdminOrSuperAdminAuth();
+    if (!authCheck.authorized) {
+      return authCheck.response;
     }
+    const currentUser = authCheck.user;
 
     const { ownerId } = await params;
     const ownerIdNum = parseInt(ownerId);

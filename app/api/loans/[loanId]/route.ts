@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser, isAdmin } from "@/lib/auth";
+import { getCurrentUser, checkAdminOrSuperAdminAuth } from "@/lib/auth";
 import { logUpdate, logDelete } from "@/lib/activity-logger";
 import { Prisma } from "@prisma/client";
 
@@ -68,10 +68,11 @@ export async function PATCH(
   { params }: { params: Promise<{ loanId: string }> }
 ) {
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) {
-      return new NextResponse("Unauthorized", { status: 401 });
+    const authCheck = await checkAdminOrSuperAdminAuth();
+    if (!authCheck.authorized) {
+      return authCheck.response;
     }
+    const currentUser = authCheck.user;
 
     const body = await req.json();
     console.log('Received update data:', body);
@@ -142,11 +143,11 @@ export async function DELETE(
   { params }: { params: Promise<{ loanId: string }> }
 ) {
   try {
-    const currentUser = await getCurrentUser();
-    const isUserAdmin = await isAdmin();
-    if (!isUserAdmin || !currentUser) {
-      return new NextResponse("Unauthorized", { status: 403 });
+    const authCheck = await checkAdminOrSuperAdminAuth();
+    if (!authCheck.authorized) {
+      return authCheck.response;
     }
+    const currentUser = authCheck.user;
 
     const { loanId } = await params;
     const loan = await db.loan.findUnique({
