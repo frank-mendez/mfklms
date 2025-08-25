@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
+import { checkAuth } from "@/lib/auth";
 import { logCreate } from "@/lib/activity-logger";
+import { calculateRepaymentSchedule, validateRepaymentParams } from "@/utils/loans/repayment-calculator";
 
 // Get all loans
 export async function GET() {
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) {
-      return new NextResponse("Unauthorized", { status: 401 });
+    const authCheck = await checkAuth();
+    if (!authCheck.authorized) {
+      return authCheck.response;
     }
 
     const loans = await db.loan.findMany({
@@ -51,31 +52,62 @@ export async function GET() {
 // Create new loan
 export async function POST(req: Request) {
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) {
-      return new NextResponse("Unauthorized", { status: 401 });
+    const authCheck = await checkAuth();
+    if (!authCheck.authorized) {
+      return authCheck.response;
     }
+    const currentUser = authCheck.user;
 
     const body = await req.json();
     const { borrowerId, principal, interestRate, startDate, maturityDate } = body;
 
-    if (!borrowerId || !principal || !interestRate || !startDate) {
-      return new NextResponse("Missing required fields", { status: 400 });
+    if (!borrowerId || !principal || !interestRate || !startDate || !maturityDate) {
+      return new NextResponse("Missing required fields: borrowerId, principal, interestRate, startDate, and maturityDate are required", { status: 400 });
     }
 
-    // Create loan with initial disbursement transaction
+    const startDateObj = new Date(startDate);
+    const maturityDateObj = new Date(maturityDate);
+
+    // Validate repayment parameters
+    const validationError = validateRepaymentParams(
+      parseFloat(principal),
+      parseFloat(interestRate),
+      startDateObj,
+      maturityDateObj
+    );
+
+    if (validationError) {
+      return new NextResponse(validationError, { status: 400 });
+    }
+
+    // Calculate repayment schedule
+    const repaymentSchedule = calculateRepaymentSchedule(
+      parseFloat(principal),
+      parseFloat(interestRate),
+      startDateObj,
+      maturityDateObj
+    );
+
+    // Create loan with automatic repayments and initial disbursement transaction
     const loan = await db.loan.create({
       data: {
         borrowerId: parseInt(borrowerId),
         principal,
         interestRate,
-        startDate: new Date(startDate),
-        maturityDate: maturityDate ? new Date(maturityDate) : null,
+        startDate: startDateObj,
+        maturityDate: maturityDateObj,
+        repayments: {
+          create: repaymentSchedule.map((schedule) => ({
+            dueDate: schedule.dueDate,
+            amountDue: schedule.amountDue,
+            status: 'PENDING'
+          }))
+        },
         transactions: {
           create: {
             transactionType: 'DISBURSEMENT',
             amount: principal,
-            date: new Date(startDate),
+            date: startDateObj,
           }
         }
       },
@@ -83,6 +115,11 @@ export async function POST(req: Request) {
         borrower: {
           select: {
             name: true,
+          }
+        },
+        repayments: {
+          orderBy: {
+            dueDate: 'asc'
           }
         },
         transactions: true,
@@ -94,13 +131,15 @@ export async function POST(req: Request) {
       currentUser.id,
       'LOAN',
       loan.id,
-      `Loan for ${loan.borrower.name}`,
+      `Loan for ${loan.borrower.name} with ${loan.repayments.length} scheduled repayments`,
       JSON.stringify({
         borrowerId: loan.borrowerId,
         principal: loan.principal,
         interestRate: loan.interestRate,
         startDate: loan.startDate,
-        maturityDate: loan.maturityDate
+        maturityDate: loan.maturityDate,
+        repaymentsCount: loan.repayments.length,
+        totalRepaymentAmount: loan.repayments.reduce((sum, r) => sum + parseFloat(r.amountDue.toString()), 0)
       })
     );
 
