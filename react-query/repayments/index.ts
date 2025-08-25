@@ -107,3 +107,29 @@ export const useDeleteRepayment = () => {
     }
   });
 };
+
+// Mutation hook to send SMS reminder for overdue repayment
+export const useSendSmsReminder = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (repaymentId: number): Promise<{ success: boolean; message: string; borrower: string; contact: string }> => {
+      const response = await fetch(`/api/repayments/${repaymentId}/send-sms`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Send SMS reminder error:', errorText);
+        throw new Error(`Failed to send SMS reminder: ${errorText}`);
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate activities to show the new SMS log entry
+      queryClient.invalidateQueries({ queryKey: ['activities'] });
+    }
+  });
+};

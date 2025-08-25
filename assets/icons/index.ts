@@ -8,7 +8,8 @@ export {
   WarningIcon,
   ErrorIcon,
   LoadingSpinner,
-  UsersIcon
+  UsersIcon,
+  SmsIcon
 } from './CommonIcons';
 
 // Stats Icons

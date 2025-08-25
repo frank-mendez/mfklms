@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRepayments, useUpdateRepayment } from '@/react-query/repayments';
+import { useRepayments, useUpdateRepayment, useSendSmsReminder } from '@/react-query/repayments';
 import { useCreateTransaction } from '@/react-query/transactions';
 import { useErrorModal } from '@/hooks/useErrorModal';
 import { useConfirmModal } from '@/hooks/useConfirmModal';
@@ -17,7 +17,8 @@ import {
   LoadingSpinner,
   MoneyIcon,
   CheckCircleIcon,
-  WarningIcon
+  WarningIcon,
+  SmsIcon
 } from '@/assets/icons';
 
 
@@ -25,6 +26,7 @@ export default function RepaymentsPage() {
   const { data: repayments, isLoading, error } = useRepayments();
   const updateRepayment = useUpdateRepayment();
   const createTransaction = useCreateTransaction();
+  const sendSmsReminder = useSendSmsReminder();
   const { errorModal, showError, hideError } = useErrorModal();
   const { 
     isOpen: isConfirmOpen, 
@@ -103,6 +105,30 @@ export default function RepaymentsPage() {
     setIsDeleteModalOpen(true);
   };
 
+  const handleSendSmsReminder = (repayment: Repayment) => {
+    showConfirm(
+      {
+        title: 'Send SMS Reminder',
+        message: `Send SMS reminder to ${repayment.loan.borrower.name} for overdue payment of ${formatCurrency(Number(repayment.amountDue))}?`,
+        confirmText: 'Send SMS',
+        cancelText: 'Cancel',
+        confirmButtonClass: 'btn-primary'
+      },
+      async () => {
+        try {
+          const result = await sendSmsReminder.mutateAsync(repayment.id);
+          // Show success message - you could add a toast notification here
+          console.log('SMS sent successfully:', result);
+        } catch (error) {
+          showError(
+            'SMS Reminder Failed',
+            error instanceof Error ? error.message : 'Failed to send SMS reminder'
+          );
+        }
+      }
+    );
+  };
+
   const closeModals = () => {
     setIsCreateModalOpen(false);
     setIsViewModalOpen(false);
@@ -111,7 +137,7 @@ export default function RepaymentsPage() {
     setSelectedRepayment(null);
   };
 
-  const getStatusBadgeClass = (status: 'PENDING' | 'PAID' | 'LATE' | 'MISSED') => {
+  const getStatusBadgeClass = (status: 'PENDING' | 'PAID' | 'LATE' | 'MISSED' | 'OVERDUE') => {
     switch (status) {
       case 'PAID':
         return 'badge badge-success';
@@ -119,6 +145,8 @@ export default function RepaymentsPage() {
         return 'badge badge-warning';
       case 'LATE':
         return 'badge badge-error';
+      case 'OVERDUE':
+        return 'badge badge-error badge-outline';
       case 'MISSED':
         return 'badge badge-error badge-outline';
       default:
@@ -126,13 +154,15 @@ export default function RepaymentsPage() {
     }
   };
 
-  const getStatusIcon = (status: 'PENDING' | 'PAID' | 'LATE' | 'MISSED') => {
+  const getStatusIcon = (status: 'PENDING' | 'PAID' | 'LATE' | 'MISSED' | 'OVERDUE') => {
     switch (status) {
       case 'PAID':
         return <CheckCircleIcon className="h-3 w-3" />;
       case 'PENDING':
         return <WarningIcon className="h-3 w-3" />;
       case 'LATE':
+        return <ErrorIcon className="h-3 w-3" />;
+      case 'OVERDUE':
         return <ErrorIcon className="h-3 w-3" />;
       case 'MISSED':
         return <ErrorIcon className="h-3 w-3" />;
@@ -148,7 +178,7 @@ export default function RepaymentsPage() {
     }).format(amount);
   };
 
-  const calculatePaymentStatus = (dueDate: Date, paymentDate?: Date): 'PENDING' | 'PAID' | 'LATE' => {
+  const calculatePaymentStatus = (dueDate: Date, paymentDate?: Date): 'PENDING' | 'PAID' | 'LATE' | 'OVERDUE' => {
     // If payment has been made, it's PAID
     if (paymentDate) {
       return 'PAID';
@@ -156,8 +186,10 @@ export default function RepaymentsPage() {
     
     // Check if overdue
     const now = new Date();
-    if (new Date(dueDate) < now) {
-      return 'LATE';
+    const dueDateObj = new Date(dueDate);
+    
+    if (dueDateObj < now) {
+      return 'OVERDUE';
     }
     
     return 'PENDING';
@@ -238,6 +270,19 @@ export default function RepaymentsPage() {
                         <MoneyIcon className="h-4 w-4" />
                         {(updateRepayment.isPending || createTransaction.isPending) ? 'Processing...' : 'Pay'}
                       </button>
+                      
+                      {/* SMS Reminder button - only show for overdue pending repayments */}
+                      {currentStatus === 'OVERDUE' && (
+                        <button 
+                          className="btn btn-sm btn-primary"
+                          onClick={() => handleSendSmsReminder(repayment)}
+                          disabled={sendSmsReminder.isPending}
+                        >
+                          <SmsIcon className="h-4 w-4" />
+                          {sendSmsReminder.isPending ? 'Sending...' : 'Send SMS'}
+                        </button>
+                      )}
+                      
                       <button 
                         className="btn btn-sm btn-info"
                         onClick={() => handleViewRepayment(repayment)}
