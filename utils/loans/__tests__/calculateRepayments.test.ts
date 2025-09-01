@@ -1,4 +1,4 @@
-import { calculateRepaymentSchedule, validateRepaymentParams } from '../repayment-calculator'
+ import { calculateRepaymentSchedule, validateRepaymentParams } from '../repayment-calculator'
 
 describe('calculateRepaymentSchedule', () => {
   it('calculates repayments correctly for 4-month loan', () => {

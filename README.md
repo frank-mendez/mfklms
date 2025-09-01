@@ -11,6 +11,9 @@ A modern authentication system built with Next.js 14, featuring role-based acces
 - ✅ User Management (CRUD)
 - ✅ PostgreSQL Database with Prisma ORM
 - ✅ TypeScript Support
+- ✅ Comprehensive Testing Suite
+- ✅ Pre-commit Quality Checks
+- ✅ Automated Build Validation
 
 ## Prerequisites
 
@@ -70,6 +73,13 @@ npm run db:setup
 - `npm run db:setup` - Complete database setup (generate + push + seed)
 - `npm run db:deploy` - Deploy migrations (production)
 
+### Testing
+
+- `npm test` - Run tests in watch mode
+- `npm run test:ci` - Run tests once for CI/commit hooks
+- `npm run test:coverage` - Run tests with coverage report
+- `npm run test:watch` - Run tests in watch mode
+
 ### Production Deployment
 
 - `npm run build:production` - Production build with database setup
@@ -88,6 +98,128 @@ npm run dev
 ```
 
 Visit [http://localhost:3000](http://localhost:3000) to see the application.
+
+## Testing & Quality Assurance
+
+This project includes a comprehensive testing setup with automated quality checks to ensure code reliability and maintain high standards.
+
+### Testing Framework
+
+- **Jest** - Testing framework with Next.js integration
+- **Testing Library** - React component testing utilities
+- **Coverage Reports** - Detailed test coverage analysis
+- **Pre-commit Hooks** - Automated quality gates
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests with coverage report
+npm run test:coverage
+
+# Run tests in CI mode (no watch)
+npm run test:ci
+
+# Run tests in watch mode
+npm run test:watch
+```
+
+### Test Coverage
+
+Current test coverage includes:
+
+- **Components**: React component behavior and user interactions
+- **Utils**: Business logic and utility functions
+- **React Query Hooks**: API integration and data fetching
+- **Calculation Logic**: Loan repayment calculations and validations
+
+Coverage reports are generated in the `coverage/` directory and include:
+
+- HTML reports (`coverage/index.html`)
+- LCOV format for CI integration
+- Console summary with detailed metrics
+
+### Pre-commit Quality Checks
+
+Every commit automatically runs:
+
+1. **🔨 Build Validation**
+
+   - TypeScript compilation
+   - Next.js build process
+   - ESLint code quality checks
+   - Dependency resolution verification
+
+2. **🧪 Test Execution**
+
+   - All Jest unit tests
+   - Coverage threshold validation
+   - Test failure detection
+
+3. **✅ Commit Protection**
+   - Blocks commits if build fails
+   - Prevents commits with failing tests
+   - Ensures code quality standards
+
+```bash
+# The pre-commit hook runs automatically, but you can test manually:
+npm run build && npm run test:ci
+```
+
+### Test Structure
+
+```
+├── components/
+│   └── __tests__/          # Component tests
+├── utils/
+│   └── __tests__/          # Utility function tests
+├── react-query/
+│   └── __tests__/          # API hook tests
+└── jest.config.js          # Jest configuration
+└── jest.setup.js           # Test environment setup
+```
+
+### Writing Tests
+
+The project uses Jest with Testing Library for comprehensive testing:
+
+```typescript
+// Component test example
+import { render, screen, fireEvent } from "@testing-library/react";
+import MyComponent from "../MyComponent";
+
+test("renders and handles user interaction", () => {
+  render(<MyComponent />);
+  const button = screen.getByRole("button");
+  fireEvent.click(button);
+  expect(screen.getByText("Updated")).toBeInTheDocument();
+});
+
+// Utility function test example
+import { calculateTotal } from "../calculations";
+
+test("calculates total correctly", () => {
+  expect(calculateTotal(100, 0.12)).toBe(112);
+});
+```
+
+### Continuous Integration
+
+The testing setup is designed for CI/CD integration:
+
+- Tests run automatically on every commit
+- Coverage reports can be integrated with CI platforms
+- Build validation prevents deployment of broken code
+- Standardized test commands across environments
+
+### Quality Standards
+
+- **Coverage Threshold**: Minimum coverage requirements enforced
+- **Test-Driven Development**: Write tests alongside new features
+- **Component Testing**: User-focused testing approach
+- **Business Logic Testing**: Critical calculations and validations covered
 
 ## Default Admin Credentials
 
@@ -167,12 +299,22 @@ Make sure to set these in your Vercel dashboard:
 
 ## Tech Stack
 
+### Core Framework
+
 - Next.js 14
 - NextAuth.js
 - Prisma
 - PostgreSQL
 - TypeScript
 - bcryptjs
+
+### Testing & Quality
+
+- Jest with Next.js integration
+- Testing Library (React, Jest DOM, User Event)
+- Husky (Git hooks)
+- ESLint
+- Coverage reporting (HTML, LCOV)
 
 ## Learn More
 
