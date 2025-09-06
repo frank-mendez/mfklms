@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useCreateBorrower, useUpdateBorrower } from '@/react-query/borrowers';
 import { CreateBorrowerData, Borrower } from '@/types/borrower';
-import { LoadingSpinner, PlusIcon, EditIcon } from '@/assets/icons';
+import { LoadingSpinner, PlusIcon, EditIcon, CloseIcon } from '@/assets/icons';
 
 interface CreateEditBorrowerModalProps {
   isOpen: boolean;
@@ -101,42 +101,58 @@ export default function CreateEditBorrowerModal({
 
   return (
     <div className="modal modal-open">
-      <div className="modal-box">
+      <div className="modal-box" role="dialog" aria-labelledby="modal-title">
         <form onSubmit={handleSubmit}>
-          <h3 className="font-bold text-lg mb-4">
-            {editingBorrower ? 'Edit Borrower' : 'Add New Borrower'}
-          </h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 id="modal-title" className="font-bold text-lg">
+              {editingBorrower ? 'Edit Borrower' : 'Add New Borrower'}
+            </h3>
+            <button
+              type="button"
+              className="btn btn-sm btn-circle btn-ghost"
+              onClick={onClose}
+              disabled={createBorrower.isPending || updateBorrower.isPending}
+              aria-label="Close modal"
+            >
+              <CloseIcon className="h-4 w-4" />
+            </button>
+          </div>
           
           <div className="form-control w-full mb-4">
-            <label className="label">
+            <label htmlFor="borrower-name" className="label">
               <span className="label-text">Full Name *</span>
             </label>
             <input
+              id="borrower-name"
               type="text"
               name="name"
               value={formData.name}
               onChange={handleInputChange}
               placeholder="Enter borrower's full name"
               className={`input input-bordered w-full ${formErrors.name ? 'input-error' : ''}`}
+              disabled={createBorrower.isPending || updateBorrower.isPending}
+              aria-describedby={formErrors.name ? 'name-error' : undefined}
             />
             {formErrors.name && (
               <label className="label">
-                <span className="label-text-alt text-error">{formErrors.name}</span>
+                <span id="name-error" className="label-text-alt text-error">{formErrors.name}</span>
               </label>
             )}
           </div>
 
           <div className="form-control w-full mb-6">
-            <label className="label">
+            <label htmlFor="borrower-contact" className="label">
               <span className="label-text">Contact Information</span>
             </label>
             <textarea
+              id="borrower-contact"
               name="contactInfo"
               value={formData.contactInfo || ''}
               onChange={handleInputChange}
               placeholder="Phone number, email, address, etc."
               className="textarea textarea-bordered w-full"
               rows={3}
+              disabled={createBorrower.isPending || updateBorrower.isPending}
             />
             <label className="label">
               <span className="label-text-alt">Optional - Phone, email, address, etc.</span>

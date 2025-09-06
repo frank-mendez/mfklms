@@ -173,10 +173,11 @@ export default function CreateEditLoanModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             {/* Borrower Selection */}
             <div className="form-control w-full">
-              <label className="label">
+              <label className="label" htmlFor="borrowerId">
                 <span className="label-text">Borrower *</span>
               </label>
               <select
+                id="borrowerId"
                 name="borrowerId"
                 value={formData.borrowerId}
                 onChange={handleInputChange}
@@ -201,10 +202,11 @@ export default function CreateEditLoanModal({
 
             {/* Principal Amount */}
             <div className="form-control w-full">
-              <label className="label">
+              <label className="label" htmlFor="principal">
                 <span className="label-text">Principal Amount (₱) *</span>
               </label>
               <input
+                id="principal"
                 type="number"
                 name="principal"
                 value={formData.principal || ''}
@@ -225,10 +227,11 @@ export default function CreateEditLoanModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             {/* Interest Rate */}
             <div className="form-control w-full">
-              <label className="label">
+              <label className="label" htmlFor="interestRate">
                 <span className="label-text">Interest Rate (%) *</span>
               </label>
               <input
+                id="interestRate"
                 type="number"
                 name="interestRate"
                 value={formData.interestRate || ''}
@@ -248,10 +251,11 @@ export default function CreateEditLoanModal({
 
             {/* Start Date */}
             <div className="form-control w-full">
-              <label className="label">
+              <label className="label" htmlFor="startDate">
                 <span className="label-text">Start Date *</span>
               </label>
               <input
+                id="startDate"
                 type="date"
                 name="startDate"
                 value={formData.startDate}
@@ -268,10 +272,11 @@ export default function CreateEditLoanModal({
 
           {/* Expected Return Date */}
           <div className="form-control w-full mb-6">
-            <label className="label">
+            <label className="label" htmlFor="maturityDate">
               <span className="label-text">Expected Return Date *</span>
             </label>
             <input
+              id="maturityDate"
               type="date"
               name="maturityDate"
               value={formData.maturityDate}
