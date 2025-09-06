@@ -422,6 +422,44 @@ To learn more about the technologies used:
 - [NextAuth.js Documentation](https://next-auth.js.org)
 - [Prisma Documentation](https://www.prisma.io/docs)
 
-## License
+## 🤝 Contributing
 
-MIT
+We welcome contributions from the community! Please read our [Contributing Guidelines](CONTRIBUTING.md) to learn how to contribute to this project.
+
+### Quick Start for Contributors
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Write or update tests
+5. Ensure all tests pass (`npm run test:ci`)
+6. Commit your changes (`git commit -m 'Add amazing feature'`)
+7. Push to the branch (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
+
+For detailed contribution guidelines, development setup, and coding standards, please see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## 📜 Code of Conduct
+
+This project and everyone participating in it is governed by our [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to the project maintainers.
+
+We are committed to providing a welcoming and inclusive experience for all contributors, regardless of background or identity.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+### MIT License Summary
+
+- ✅ Commercial use
+- ✅ Modification
+- ✅ Distribution
+- ✅ Private use
+- ❌ Liability
+- ❌ Warranty
+
+Copyright (c) 2025 Frank Mendez
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
